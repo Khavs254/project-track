@@ -1,0 +1,1897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Space &amp; Style — Project Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0f1f4d; --ink-2:#34446f; --muted:#6a7595;
+  --line:#dde2ee; --line-2:#c6cee2; --bg:#edf0f6; --card:#fff;
+  --blue:#1f4fbf; --blue-soft:#e6edfc; --orange:#f29a1f; --orange-d:#d9820a;
+  --red:#b3261e; --red-soft:#fdeceb; --amber:#9a5a00; --amber-soft:#fff1dc;
+  --green:#17784a; --green-soft:#e3f5ec;
+  --font:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--font);font-size:14px;line-height:1.4;color:var(--ink);background:var(--bg);font-variant-numeric:tabular-nums}
+button{font:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:var(--ink)}
+[hidden]{display:none!important}
+
+/* ---------- top bar ---------- */
+.topbar{position:sticky;top:0;z-index:60;background:var(--ink);color:#fff;display:flex;align-items:center;gap:14px;padding:8px 18px;border-bottom:3px solid var(--orange)}
+.brand{display:flex;align-items:center;gap:10px;flex:none}
+.logo-chip{background:#fff;border-radius:6px;padding:3px 8px;display:flex;align-items:center}
+.logo-chip img{height:28px;display:block}
+.brand-t{font-weight:700;font-size:15px}
+.projbtn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:6px;padding:6px 12px;display:flex;align-items:center;gap:8px;max-width:360px;min-width:0}
+.projbtn #projName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.projbtn:hover{background:rgba(255,255,255,.16)}
+.tb-actions{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.tb-btn{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:6px;padding:6px 11px;font-weight:600;font-size:13px}
+.tb-btn:hover:not(:disabled){background:rgba(255,255,255,.14)}
+.tb-btn:disabled{opacity:.4;cursor:default}
+.tb-btn.primary{background:var(--orange);border-color:var(--orange);color:#1c1200}
+.tb-btn.primary:hover{background:var(--orange-d);border-color:var(--orange-d)}
+
+.tabs{background:#fff;border-bottom:1px solid var(--line);padding:0 18px;display:flex;gap:24px;position:sticky;top:53px;z-index:50;overflow-x:auto}
+.tab{padding:12px 2px 10px;font-weight:700;color:var(--muted);border:0;background:none;border-bottom:3px solid transparent;font-size:14px;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--ink);border-bottom-color:var(--orange)}
+.tab .pip{display:inline-block;min-width:18px;padding:0 5px;margin-left:5px;border-radius:9px;background:var(--red);color:#fff;font-size:11px;line-height:17px;text-align:center;vertical-align:1px}
+
+/* ---------- layout ---------- */
+.wrap{max-width:1640px;margin:0 auto;padding:18px}
+.split{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:16px;align-items:start}
+.side{position:sticky;top:112px}
+@media (max-width:1100px){.split{grid-template-columns:minmax(0,1fr)}.side{position:static}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:14px}
+.card>h2{margin:0 0 4px;font-size:15px;font-weight:800}
+.card>.sub{margin:0 0 12px;color:var(--muted);font-size:12.5px}
+.hint{color:var(--muted);font-size:12.5px;margin:8px 0 0}
+.grid{display:grid;gap:10px 14px}
+.g1{grid-template-columns:minmax(0,1fr)}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:820px){.g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.fld{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);font-weight:600;min-width:0}
+.fld>span:empty{display:none}
+.fld.span2{grid-column:span 2}
+.fld.chk{flex-direction:row;align-items:center;gap:8px;font-size:13px;color:var(--ink);font-weight:500;padding-top:18px}
+input[type=text],input[type=date],select,textarea{width:100%;border:1px solid var(--line-2);border-radius:6px;padding:7px 9px;background:#fff;min-width:0;font-weight:500}
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--blue)}
+textarea{resize:vertical;line-height:1.4}
+textarea.autosize{resize:none;overflow:hidden;line-height:1.25;padding:6px 7px;display:block}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--blue-soft);border-color:var(--blue)}
+input.r{text-align:right}
+
+.btn{border:1px solid var(--line-2);background:#fff;color:var(--ink);border-radius:6px;padding:7px 12px;font-weight:600;font-size:13px}
+.btn:hover{background:var(--blue-soft);border-color:var(--blue)}
+.btn.primary{background:var(--orange);border-color:var(--orange);color:#1c1200}
+.btn.primary:hover{background:var(--orange-d);border-color:var(--orange-d)}
+.btn.solid{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.solid:hover{background:var(--ink-2)}
+.btn.danger{color:var(--red)}
+.btn.danger:hover{background:var(--red-soft);border-color:var(--red)}
+.btn.sm{padding:4px 9px;font-size:12px}
+.ib{border:1px solid var(--line-2);background:#fff;color:var(--ink-2);border-radius:5px;min-width:26px;height:26px;padding:0 6px;font-size:12px;font-weight:700}
+.ib:hover:not(:disabled){background:var(--blue-soft);border-color:var(--blue);color:var(--blue)}
+.ib:disabled{opacity:.35;cursor:default}
+.ib.del:hover:not(:disabled){background:var(--red-soft);border-color:var(--red);color:var(--red)}
+.row-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+
+/* ---------- stats ---------- */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+@media (max-width:900px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.stat .k{font-size:11.5px;font-weight:700;color:var(--muted);letter-spacing:.2px}
+.stat .v{font-size:23px;font-weight:800;letter-spacing:-.5px;margin-top:3px;line-height:1.15}
+.stat .s{font-size:12px;color:var(--ink-2);margin-top:3px}
+.stat.good .v{color:var(--green)} .stat.bad .v{color:var(--red)} .stat.warn .v{color:var(--amber)}
+
+.bar{height:8px;border-radius:5px;background:var(--line);overflow:hidden;margin-top:8px}
+.bar>i{display:block;height:100%;background:var(--blue);border-radius:5px}
+.bar.g>i{background:var(--green)} .bar.a>i{background:var(--orange)} .bar.r>i{background:var(--red)}
+.dual{position:relative;height:8px;border-radius:5px;background:var(--line);margin-top:8px}
+.dual .act{position:absolute;inset:0 auto 0 0;background:var(--blue);border-radius:5px}
+.dual .plan{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink)}
+
+/* ---------- tables ---------- */
+.tablewrap{overflow-x:auto}
+table.t{width:100%;border-collapse:collapse;min-width:820px}
+table.t th{font-size:12px;color:var(--muted);font-weight:700;text-align:left;padding:6px 5px;border-bottom:2px solid var(--line-2);white-space:nowrap}
+table.t th.r{text-align:right}
+table.t td{padding:4px 3px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.t td.r{text-align:right}
+table.t td.idx{width:26px;color:var(--muted);text-align:center;font-size:12px}
+table.t input,table.t select{padding:6px 7px}
+table.t tr.sect td{background:#f3f5fb;font-weight:800;padding:7px 8px;color:var(--ink-2);border-bottom:1px solid var(--line-2)}
+table.t tfoot td{border-top:2px solid var(--line-2);border-bottom:0;font-weight:800;padding-top:8px}
+.calc{display:block;text-align:right;font-weight:700;white-space:nowrap;padding:6px 4px}
+.calc.soft{font-weight:500;color:var(--ink-2)}
+.empty{padding:26px;text-align:center;color:var(--muted)}
+.acts{white-space:nowrap}
+.acts .ib{margin-right:2px}
+
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.pill.grey{background:var(--line);color:var(--ink-2)}
+.pill.blue{background:var(--blue-soft);color:var(--blue)}
+.pill.amber{background:var(--amber-soft);color:var(--amber)}
+.pill.red{background:var(--red-soft);color:var(--red)}
+.pill.green{background:var(--green-soft);color:var(--green)}
+tr.late td{background:#fff7f6}
+tr.soon td{background:#fffaf0}
+
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chip{border:1px solid var(--line-2);background:#fff;border-radius:999px;padding:4px 12px;font-size:12.5px;font-weight:700;color:var(--ink-2)}
+.chip.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.toolbar input[type=text]{width:260px}
+.toolbar select{width:auto;min-width:150px}
+
+/* ---------- look-ahead ---------- */
+.week{border:1px solid var(--line);border-radius:8px;margin-bottom:10px;overflow:hidden}
+.week>h3{margin:0;padding:8px 12px;background:#f3f5fb;font-size:13px;font-weight:800;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.week>h3 small{font-weight:600;color:var(--muted)}
+.week.od>h3{background:var(--red-soft);color:var(--red)}
+.week ul{list-style:none;margin:0;padding:0}
+.week li{display:grid;grid-template-columns:110px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:7px 12px;border-top:1px solid var(--line)}
+.week li b{font-weight:700}
+.week li .d{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}
+.week li .q{font-size:12.5px;color:var(--muted);white-space:nowrap}
+@media (max-width:700px){.week li{grid-template-columns:minmax(0,1fr) auto}.week li .q{display:none}}
+
+/* ---------- gantt ---------- */
+.gantt{border:1px solid var(--line);border-radius:8px;overflow:auto;background:#fff}
+.gantt table{border-collapse:collapse;width:100%}
+.gantt th,.gantt td{border-right:1px solid var(--line);padding:0}
+.gantt .nm{position:sticky;left:0;z-index:3;background:#fff;border-right:2px solid var(--line-2);min-width:230px;max-width:230px;padding:5px 10px;font-size:13px;text-align:left}
+.gantt thead .nm{background:#f3f5fb;z-index:4}
+.gantt thead th{background:#f3f5fb;font-size:11px;font-weight:700;color:var(--muted);padding:4px 2px;text-align:center;white-space:nowrap;border-bottom:1px solid var(--line-2)}
+.gantt thead th.mo{text-align:left;padding-left:6px;font-size:11.5px;color:var(--ink-2);border-bottom:0}
+.gantt tbody tr:nth-child(even) td{background:#fafbfe}
+.gantt tbody tr:nth-child(even) .nm{background:#fafbfe}
+.gantt .cell{height:30px;position:relative}
+.gantt .cell.we{background:#f2f4f9}
+.gantt tbody tr:nth-child(even) .cell.we{background:#eef1f7}
+.gbar{position:absolute;top:6px;height:18px;border-radius:4px;background:var(--blue-soft);border:1px solid var(--blue);overflow:hidden}
+.gbar>i{display:block;height:100%;background:var(--blue);opacity:.85}
+.gbar.done{background:var(--green-soft);border-color:var(--green)}
+.gbar.done>i{background:var(--green)}
+.gbar.late{background:var(--red-soft);border-color:var(--red)}
+.gbar.late>i{background:var(--red)}
+.gbar span{position:absolute;left:5px;top:0;line-height:18px;font-size:11px;font-weight:700;color:var(--ink);white-space:nowrap}
+.today{position:absolute;top:0;bottom:0;width:2px;background:var(--orange);z-index:2;pointer-events:none}
+.ms{position:absolute;top:7px;width:14px;height:14px;background:var(--ink);transform:rotate(45deg);border-radius:2px}
+.ms.done{background:var(--green)}
+.gantt .msrow .nm{font-weight:700;color:var(--ink-2)}
+.glegend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px;align-items:center}
+.glegend i{display:inline-block;width:12px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+/* ---------- subcontractors ---------- */
+.sublist{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.subchip{border:1px solid var(--line-2);border-top:3px solid var(--line-2);background:#f8f9fc;border-radius:8px 8px 0 0;padding:7px 14px 8px;min-width:180px;text-align:left;display:flex;flex-direction:column;gap:1px}
+.subchip:hover{background:#fff}
+.subchip.on{background:#fff;border-top-color:var(--orange)}
+.subchip .t{font-weight:800;font-size:13.5px}
+.subchip .s{font-size:11.5px;color:var(--muted)}
+.subchip .n{font-size:13px;font-weight:700;color:var(--ink-2)}
+.ledger .row{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--line-2);gap:8px}
+.ledger .row span{color:var(--ink-2)}
+.ledger .row b{font-weight:800}
+.ledger .row.neg b{color:var(--red)}
+.ledger .big{border-bottom:0;padding-top:12px;flex-direction:column;align-items:stretch}
+.ledger .big span{font-weight:700}
+.ledger .big b{font-size:26px;letter-spacing:-.6px;text-align:right}
+.ledger .mini{font-size:12px;color:var(--muted);margin-top:8px}
+.ledger .btn{width:100%;margin-top:10px}
+
+/* ---------- modal + toast ---------- */
+.modal-ov{position:fixed;inset:0;background:rgba(15,31,77,.5);z-index:200;display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px 16px;overflow:auto}
+.modal{background:#fff;border-radius:10px;width:min(620px,100%);box-shadow:0 24px 60px rgba(15,31,77,.35);padding:18px 20px 16px;max-height:88vh;overflow:auto}
+.modal.wide{width:min(860px,100%)}
+.modal h3{margin:0 0 4px;font-size:17px}
+.modal .sub{margin:0 0 12px;color:var(--muted);font-size:13px}
+.modal-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap;position:sticky;bottom:-16px;background:#fff;padding:12px 0 2px;border-top:1px solid var(--line)}
+.plist{border:1px solid var(--line);border-radius:8px;max-height:48vh;overflow:auto}
+.plist .pr{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line)}
+.plist .pr:last-child{border-bottom:0}
+.plist .pr.cur{background:var(--blue-soft)}
+.plist .pn{flex:1;min-width:0}
+.plist .pn b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plist .pn small{color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(16px);background:var(--ink);color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:400;max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.help{background:#fff8ea;border:1px solid #f3d9a4;border-radius:8px;padding:9px 12px;font-size:13px;color:#6b4a06;margin-bottom:12px}
+.help.red{background:var(--red-soft);border-color:#f0b4b0;color:#7a1c16}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+
+/* ---------- printed report ---------- */
+#reportRoot{position:absolute;left:-99999px;top:0;width:210mm;visibility:hidden}
+body.report #appShell{display:none}
+body.report{background:#4b525e}
+body.report #reportRoot{position:static;left:auto;width:auto;visibility:visible;padding:70px 0 40px}
+body.report #reportBar{display:flex}
+#reportBar{display:none;align-items:center;gap:12px;position:fixed;top:0;left:0;right:0;z-index:150;background:var(--ink);color:#fff;padding:10px 18px;border-bottom:3px solid var(--orange)}
+#reportBar .grow{flex:1}
+.rpage{width:210mm;min-height:296mm;background:#fff;color:#000;padding:14mm 15mm;margin:0 auto 18px;box-shadow:0 6px 26px rgba(0,0,0,.45);font-family:Arial,Helvetica,sans-serif;font-size:10pt;line-height:1.3}
+.rpage h1{font-size:17pt;margin:0 0 2mm}
+.rpage h2{font-size:11.5pt;margin:6mm 0 2mm;padding-bottom:1mm;border-bottom:.4mm solid #0f1f4d;color:#0f1f4d}
+.rpage .rhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10mm;border-bottom:.6mm solid #0f1f4d;padding-bottom:3mm}
+.rpage .rhead img{height:12mm}
+.rpage .meta{font-size:9pt;color:#333;text-align:right}
+.rpage table{width:100%;border-collapse:collapse;font-size:9pt;margin-top:1mm}
+.rpage th{background:#0f1f4d;color:#fff;text-align:left;padding:1.4mm 2mm;font-size:8.5pt}
+.rpage th.r,.rpage td.r{text-align:right}
+.rpage td{border-bottom:.2mm solid #bbb;padding:1.2mm 2mm}
+.rpage tfoot td{border-top:.4mm solid #0f1f4d;font-weight:700}
+.rpage .kv{display:grid;grid-template-columns:repeat(4,1fr);gap:3mm;margin-top:2mm}
+.rpage .kv div{border:.2mm solid #999;border-radius:1.5mm;padding:2mm}
+.rpage .kv .k{font-size:7.5pt;color:#555;font-weight:700}
+.rpage .kv .v{font-size:12pt;font-weight:700}
+.rpage .note{font-size:8.5pt;color:#444;margin-top:2mm}
+@media print{
+  html,body{background:#fff!important}
+  #appShell,#reportBar,#toast,#modalRoot{display:none!important}
+  #reportRoot{position:static!important;left:auto!important;width:auto!important;visibility:visible!important;padding:0!important}
+  .rpage{box-shadow:none!important;margin:0!important;break-after:page;page-break-after:always}
+  .rpage.last{break-after:auto!important;page-break-after:auto!important}
+  @page{size:A4;margin:0}
+}
+
+</style>
+</head>
+<body>
+<div id="appShell">
+  <header class="topbar">
+    <div class="brand"><span class="logo-chip"><img id="brandLogo" alt="Space &amp; Style"></span><span class="brand-t">Project Tracker</span></div>
+    <button class="projbtn" data-action="projects" title="Switch or manage projects"><span id="projName">Project</span><span>&#9662;</span></button>
+    <div class="tb-actions">
+      <button class="tb-btn" id="btnUndo" data-action="undo" title="Undo (Ctrl+Z)" disabled>&#8630; Undo</button>
+      <button class="tb-btn" id="btnRedo" data-action="redo" title="Redo (Ctrl+Y)" disabled>&#8631; Redo</button>
+      <button class="tb-btn" data-action="import-quote" title="Start a project from a confirmed Quote Studio quote">Import quote</button>
+      <button class="tb-btn" data-action="export-json">Export</button>
+      <button class="tb-btn" data-action="settings">Settings</button>
+      <button class="tb-btn primary" data-action="report">Project report</button>
+    </div>
+  </header>
+  <nav class="tabs" id="tabs"></nav>
+  <main id="panel"></main>
+</div>
+<div id="reportBar"></div>
+<div id="reportRoot"></div>
+<div id="modalRoot"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script>
+const ASSETS = {"logo":"data:image/png;base64,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"};
+'use strict';
+/* =====================================================================
+   Space & Style — Project Tracker
+   Confirmed projects -> procurement, programme, subcontractors, payments.
+   Everything is kept in this browser; Export/Import moves a job around.
+   ===================================================================== */
+
+/* ---------- helpers ---------- */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const uid = () => 'i' + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
+const uuid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'p' + uid() + uid();
+const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function num(v){
+  if(typeof v === 'number') return isFinite(v) ? v : 0;
+  const n = parseFloat(String(v == null ? '' : v).replace(/,/g,'').replace(/[^\d.\-]/g,''));
+  return isFinite(n) ? n : 0;
+}
+const r2 = n => Math.round((n + Number.EPSILON) * 100) / 100;
+const clampPct = n => Math.max(0, Math.min(100, num(n)));
+function fmt(n, dp = 2){
+  n = Number(n) || 0;
+  const neg = n < 0, p = Math.abs(n).toFixed(dp).split('.');
+  return (neg ? '-' : '') + p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (p[1] ? '.' + p[1] : '');
+}
+const fmt0 = n => fmt(n, 0);
+const numDisp = v => (v === 0 || v === '' || v == null || !isFinite(v)) ? '' : String(v);
+const pad2 = n => String(n).padStart(2, '0');
+const DAY = 86400000;
+function todayISO(){ const d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+function dParse(iso){ const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; }
+function dISO(d){ return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+function addDays(iso, n){ const d = dParse(iso); if(!d) return ''; d.setDate(d.getDate() + n); return dISO(d); }
+function daysBetween(a, b){ const x = dParse(a), y = dParse(b); return (x && y) ? Math.round((y - x) / DAY) : 0; }
+function fmtDMY(iso){ const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? m[3] + '/' + m[2] + '/' + m[1] : ''; }
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDM(iso){ const d = dParse(iso); return d ? d.getDate() + ' ' + MONTHS[d.getMonth()] : ''; }
+function mondayOf(iso){ const d = dParse(iso); if(!d) return ''; const k = (d.getDay() + 6) % 7; d.setDate(d.getDate() - k); return dISO(d); }
+const splitLines = t => String(t || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+const clone = o => JSON.parse(JSON.stringify(o));
+function setPath(o, p, v){
+  const ks = p.split('.'); let a = o;
+  for(let i = 0; i < ks.length - 1; i++){ if(a[ks[i]] == null || typeof a[ks[i]] !== 'object') a[ks[i]] = {}; a = a[ks[i]]; }
+  a[ks[ks.length - 1]] = v;
+}
+let toastTimer = null;
+function toast(msg){
+  const t = $('#toast'); if(!t) return;
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+function downloadBlob(blob, name){
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 400);
+}
+function pickFile(accept, onText){
+  const inp = document.createElement('input');
+  inp.type = 'file'; if(accept) inp.accept = accept; inp.style.display = 'none';
+  inp.addEventListener('change', () => {
+    const f = inp.files && inp.files[0];
+    if(f){ const rd = new FileReader(); rd.onload = () => onText(String(rd.result || ''), f.name); rd.readAsText(f); }
+    inp.remove();
+  });
+  document.body.appendChild(inp); inp.click();
+}
+const safeName = s => String(s || 'project').replace(/[^a-z0-9\-_ ]+/gi, '').trim().replace(/\s+/g, '_') || 'project';
+
+/* ---------- storage ---------- */
+const LS = { settings:'pm_settings_v1', index:'pm_projects_v1', cur:'pm_current_v1', seeded:'pm_seeded_v1', proj:id => 'pm_project_' + id };
+let storageWarned = false;
+function lsGet(k, d){ try{ const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } }
+function lsSet(k, v){
+  try{ localStorage.setItem(k, JSON.stringify(v)); return true; }
+  catch(e){ if(!storageWarned){ storageWarned = true; toast('Browser storage is full — use Export to keep a copy of your work'); } return false; }
+}
+
+/* ---------- defaults ---------- */
+const DEFAULT_SETTINGS = { company:'SPACE AND STYLE LTD', preparedBy:'Dennis Kihiu', vatPct:16, retentionPct:10, lookAheadWeeks:4, currency:'KSh',
+  cloud:{ enabled:false, url:'xschfdgrlbgcouqaepsp', key:'sb_publishable_4aeaSsBVJU8f_F_0H0GpGg_2-CQU-bC' } };
+const TRADES = ['LGS erection','Tiling / roof covering','Structural steel','Scaffolding','Transport','Masonry','Plumbing','Electrical','General labour','Other'];
+const STD_ACTIVITIES = [
+  { name:'Setting out and survey', days:3, weight:1 },
+  { name:'LGS fabrication', days:14, weight:4 },
+  { name:'Delivery to site', days:2, weight:1 },
+  { name:'LGS trusswork erection', days:12, weight:5 },
+  { name:'Battens and wall plates', days:5, weight:2 },
+  { name:'Stone coated tile installation', days:10, weight:5 },
+  { name:'Flashings and accessories', days:4, weight:2 },
+  { name:'Snagging and handover', days:3, weight:1 }
+];
+const STD_TERMS = [
+  { label:'Advance payment on order', pct:50 },
+  { label:'On delivery of materials to site', pct:30 },
+  { label:'On practical completion', pct:20 }
+];
+const MAT_STATES = [['to-order','To order'],['ordered','Ordered'],['part','Part delivered'],['delivered','Delivered']];
+
+/* ---------- state ---------- */
+let settings = Object.assign({}, DEFAULT_SETTINGS);
+let project = null;
+const ui = { tab:'dashboard', modal:null, focus:null, ganttZoom:'week', matFilter:'', matStatus:'', subSel:'', report:false, showDone:true,
+  buyFilter:'', buySupplier:'', buyAll:false, buyOpen:{}, showSql:false };
+
+/* ---------- factories ---------- */
+function newMaterial(o){ return Object.assign({ id:uid(), code:'', desc:'', unit:'pcs', qtyReq:0, qtyOrdered:0, qtyDelivered:0, rate:0, cost:0, supplier:'', needBy:'', lpo:'', notes:'' }, o || {}); }
+function newActivity(o){ return Object.assign({ id:uid(), name:'', start:'', end:'', pct:0, weight:1 }, o || {}); }
+function newMilestone(o){ return Object.assign({ id:uid(), name:'', date:'', done:false }, o || {}); }
+function newTerm(o){ return Object.assign({ id:uid(), label:'', pct:0, amount:null, invoiced:0, invoiceNo:'', invoiceDate:'', received:0, receivedDate:'', note:'' }, o || {}); }
+function newSub(o){
+  return Object.assign({ id:uid(), name:'', trade:TRADES[0], contact:'', contractSum:0, retentionPct:settings.retentionPct,
+    variations:[], certs:[], payments:[], issues:[] }, o || {});
+}
+function newVariation(o){ return Object.assign({ id:uid(), desc:'', amount:0, date:todayISO(), approved:true }, o || {}); }
+function newCert(o){ return Object.assign({ id:uid(), no:'', date:todayISO(), grossToDate:0, note:'' }, o || {}); }
+function newPayment(o){ return Object.assign({ id:uid(), date:todayISO(), amount:0, ref:'', kind:'payment' }, o || {}); }
+function newIssue(o){ return Object.assign({ id:uid(), date:todayISO(), desc:'', value:0, recover:true }, o || {}); }
+
+function blankProject(name){
+  return {
+    id:uuid(), created:Date.now(), updated:Date.now(),
+    name:name || '', client:'', location:'', ref:'', status:'confirmed',
+    contractValue:0, vatIncluded:true, roofArea:0,
+    startDate:todayISO(), endDate:addDays(todayISO(), 45),
+    notes:'',
+    materials:[], activities:[], milestones:[], terms:[], subs:[]
+  };
+}
+function seedProgramme(p){
+  let cur = p.startDate;
+  p.activities = STD_ACTIVITIES.map(a => {
+    const act = newActivity({ name:a.name, start:cur, end:addDays(cur, a.days - 1), weight:a.weight });
+    cur = addDays(cur, a.days);
+    return act;
+  });
+  p.endDate = p.activities.length ? p.activities[p.activities.length - 1].end : p.endDate;
+  p.milestones = [
+    newMilestone({ name:'Materials on site', date:p.activities[2] ? p.activities[2].end : p.startDate }),
+    newMilestone({ name:'Roof structure complete', date:p.activities[4] ? p.activities[4].end : p.endDate }),
+    newMilestone({ name:'Practical completion', date:p.endDate })
+  ];
+}
+function seedTerms(p){ p.terms = STD_TERMS.map(t => newTerm({ label:t.label, pct:t.pct })); }
+
+/* ---------- import from Quote Studio ---------- */
+function qsLineNet(l){ return num(l.excl) * (1 - num(l.disc) / 100); }
+function qsQuoteSub(q){ return r2((q.lines || []).reduce((s, l) => s + r2(num(l.qty) * qsLineNet(l)), 0)); }
+function qsGrandTotals(qp){
+  const g = qp.grand || {};
+  const items = g.items || [];
+  const amount = it => {
+    if(it.kind === 'quote'){
+      if(it.override !== null && it.override !== undefined && it.override !== '') return r2(num(it.override));
+      const q = (qp.quotes || []).find(x => x.id === it.quoteId);
+      return q ? qsQuoteSub(q) : 0;
+    }
+    return r2(num(it.qty) * num(it.rate));
+  };
+  const sub = r2(items.reduce((s, it) => s + amount(it), 0));
+  const vat = r2(sub * num(g.vatPct === undefined ? 16 : g.vatPct) / 100);
+  return { sub, vat, total:r2(sub + vat) };
+}
+function looksLikeQuoteStudio(o){ return !!(o && Array.isArray(o.quotes) && o.grand); }
+/* Quote lines become the material schedule: same codes, same quantities. */
+function projectFromQuoteStudio(qp){
+  const p = blankProject(qp.projectName || (qp.client && qp.client.name) || 'Imported project');
+  p.client = (qp.client && qp.client.name) || '';
+  p.location = qp.projectLocation || (qp.client && qp.client.location) || '';
+  p.ref = (qp.client && qp.client.code) || '';
+  p.roofArea = num(qp.grand && qp.grand.roofArea);
+  p.notes = (qp.grand && qp.grand.scope) || '';
+  const T = qsGrandTotals(qp);
+  p.contractValue = T.total; p.vatIncluded = true;
+  p.sourceQuote = { id:qp.id, sub:T.sub, vat:T.vat, total:T.total, at:Date.now() };
+  const seen = {};
+  (qp.quotes || []).forEach(q => (q.lines || []).forEach(l => {
+    const qty = num(l.qty);
+    if(qty <= 0) return;
+    const desc = String(l.desc || '').trim();
+    if(!desc && !String(l.code || '').trim()) return;
+    if(/^transport charges?$/i.test(desc)) return;      /* a service, not a material */
+    const key = (String(l.code || '').trim().toLowerCase() || desc.toLowerCase());
+    if(seen[key]){ seen[key].qtyReq = r2(seen[key].qtyReq + qty); return; }   /* same code in two quotes */
+    const m = newMaterial({ code:String(l.code || '').trim(), desc:desc || String(l.code || ''), qtyReq:qty, rate:r2(qsLineNet(l)), unit:'pcs' });
+    seen[key] = m; p.materials.push(m);
+  }));
+  seedProgramme(p); seedTerms(p);
+  return p;
+}
+function normalizeProject(p){
+  const b = blankProject();
+  Object.keys(b).forEach(k => { if(p[k] === undefined) p[k] = b[k]; });
+  ['materials','activities','milestones','terms','subs'].forEach(k => { if(!Array.isArray(p[k])) p[k] = []; });
+  p.materials = p.materials.map(m => newMaterial(m));
+  p.activities = p.activities.map(a => newActivity(a));
+  p.milestones = p.milestones.map(m => newMilestone(m));
+  p.terms = p.terms.map(t => newTerm(t));
+  p.subs = p.subs.map(s => {
+    const sb = newSub(s);
+    sb.variations = (s.variations || []).map(v => newVariation(v));
+    sb.certs = (s.certs || []).map(c => newCert(c));
+    sb.payments = (s.payments || []).map(x => newPayment(x));
+    sb.issues = (s.issues || []).map(x => newIssue(x));
+    return sb;
+  });
+  if(!p.id) p.id = uuid();
+  return p;
+}
+
+/* ---------- projects on disk ---------- */
+function readIndex(){ const i = lsGet(LS.index, []); return Array.isArray(i) ? i : []; }
+const projectLabel = p => p.name || p.client || 'Untitled project';
+function updateIndexEntry(){
+  const idx = readIndex().filter(e => e.id !== project.id);
+  idx.unshift({ id:project.id, name:projectLabel(project), client:project.client || '', status:project.status, updated:project.updated });
+  lsSet(LS.index, idx);
+}
+let saveTimer = null;
+function queueSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 250); }
+function saveNow(){
+  clearTimeout(saveTimer); saveTimer = null;
+  if(!project) return;
+  project.updated = Date.now();
+  lsSet(LS.proj(project.id), project); lsSet(LS.cur, project.id); updateIndexEntry();
+}
+function loadProjectById(id){
+  const raw = lsGet(LS.proj(id), null);
+  if(!raw) return false;
+  if(project) saveNow();
+  project = normalizeProject(raw); lsSet(LS.cur, project.id); histInit();
+  return true;
+}
+function deleteProjectById(id){
+  try{ localStorage.removeItem(LS.proj(id)); }catch(e){}
+  lsSet(LS.index, readIndex().filter(e => e.id !== id));
+}
+function saveSettings(){ lsSet(LS.settings, settings); }
+
+/* ---------- undo / redo ---------- */
+const hist = { undo:[], redo:[], last:'', lastAt:0 };
+function histInit(){ hist.undo = []; hist.redo = []; hist.last = JSON.stringify(project); hist.lastAt = 0; updateHistBtns(); }
+function histRecord(structural){
+  const now = JSON.stringify(project);
+  if(now === hist.last) return;
+  const t = Date.now();
+  if(structural || t - hist.lastAt > 700){ hist.undo.push(hist.last); if(hist.undo.length > 60) hist.undo.shift(); }
+  hist.lastAt = structural ? 0 : t; hist.redo = []; hist.last = now;
+  updateHistBtns();
+}
+function applySnapshot(s){ project = JSON.parse(s); hist.last = s; hist.lastAt = 0; saveNow(); render(); updateHistBtns(); }
+function undo(){ if(!hist.undo.length) return; hist.redo.push(JSON.stringify(project)); applySnapshot(hist.undo.pop()); }
+function redo(){ if(!hist.redo.length) return; hist.undo.push(JSON.stringify(project)); applySnapshot(hist.redo.pop()); }
+function updateHistBtns(){ const u = $('#btnUndo'), r = $('#btnRedo'); if(u) u.disabled = !hist.undo.length; if(r) r.disabled = !hist.redo.length; }
+
+/* =====================================================================
+   Calculations
+   ===================================================================== */
+
+/* ---- progress ---- */
+function activityPlannedPct(a, on){
+  const s = dParse(a.start), e = dParse(a.end), d = dParse(on || todayISO());
+  if(!s || !e || !d) return 0;
+  if(d < s) return 0;
+  if(d >= e) return 100;
+  const span = Math.max(1, (e - s) / DAY + 1);
+  return clampPct(((d - s) / DAY + 1) / span * 100);
+}
+function progress(){
+  const acts = project.activities;
+  const wTot = acts.reduce((s, a) => s + Math.max(0, num(a.weight) || 1), 0);
+  if(!wTot) return { actual:0, planned:0, variance:0 };
+  const actual = acts.reduce((s, a) => s + clampPct(a.pct) * (num(a.weight) || 1), 0) / wTot;
+  const planned = acts.reduce((s, a) => s + activityPlannedPct(a) * (num(a.weight) || 1), 0) / wTot;
+  return { actual:r2(actual), planned:r2(planned), variance:r2(actual - planned) };
+}
+function programmeRange(){
+  let min = project.startDate, max = project.endDate;
+  project.activities.forEach(a => { if(a.start && (!min || a.start < min)) min = a.start; if(a.end && (!max || a.end > max)) max = a.end; });
+  project.milestones.forEach(m => { if(m.date && (!min || m.date < min)) min = m.date; if(m.date && (!max || m.date > max)) max = m.date; });
+  if(!min) min = todayISO(); if(!max) max = addDays(min, 30);
+  return { start:min, end:max };
+}
+
+/* ---- procurement ---- */
+function matState(m){
+  const req = num(m.qtyReq), ord = num(m.qtyOrdered), del = num(m.qtyDelivered);
+  if(req > 0 && del >= req) return 'delivered';
+  if(del > 0) return 'part';
+  if(ord > 0) return ord >= req ? 'ordered' : 'part-ordered';
+  return 'to-order';
+}
+const matStateLabel = s => ({ 'to-order':'To order', 'part-ordered':'Part ordered', 'ordered':'Ordered', 'part':'Part delivered', 'delivered':'Delivered' })[s] || s;
+const matOutstanding = m => Math.max(0, r2(num(m.qtyReq) - num(m.qtyDelivered)));
+const matValue = m => r2(num(m.qtyReq) * num(m.rate));          /* value at the price quoted to the client */
+const matCost  = m => r2(num(m.qtyReq) * num(m.cost));          /* what buying it actually costs us */
+function matUrgency(m){
+  const st = matState(m);
+  if(st === 'delivered') return 'ok';
+  if(!m.needBy) return 'none';
+  const d = daysBetween(todayISO(), m.needBy);
+  if(d < 0) return 'late';
+  if(d <= 7) return 'soon';
+  if(d <= 21) return 'watch';
+  return 'none';
+}
+function procurementTotals(){
+  const ms = project.materials;
+  const value = r2(ms.reduce((s, m) => s + matValue(m), 0));
+  const cost = r2(ms.reduce((s, m) => s + matCost(m), 0));
+  const costed = ms.filter(m => num(m.cost) > 0).length;
+  const deliveredValue = r2(ms.reduce((s, m) => s + r2(num(m.qtyDelivered) * num(m.rate)), 0));
+  const counts = { total:ms.length, late:0, soon:0, toOrder:0, delivered:0 };
+  ms.forEach(m => {
+    const u = matUrgency(m), st = matState(m);
+    if(u === 'late') counts.late++; else if(u === 'soon') counts.soon++;
+    if(st === 'to-order') counts.toOrder++;
+    if(st === 'delivered') counts.delivered++;
+  });
+  return { value, cost, costed, uncosted: ms.length - costed, deliveredValue, pct: value ? r2(deliveredValue / value * 100) : 0, counts };
+}
+/* Look-ahead: what still has to arrive, bucketed by the week it is needed */
+function lookAhead(weeks){
+  weeks = Math.max(1, num(weeks) || 4);
+  const start = mondayOf(todayISO());
+  const buckets = [];
+  for(let i = 0; i < weeks; i++){
+    const ws = addDays(start, i * 7);
+    buckets.push({ start:ws, end:addDays(ws, 6), label:(i === 0 ? 'This week' : i === 1 ? 'Next week' : 'Week of ' + fmtDM(ws)), items:[] });
+  }
+  const overdue = { start:'', end:'', label:'Overdue', items:[] };
+  const later = { start:'', end:'', label:'Later / no date', items:[] };
+  project.materials.forEach(m => {
+    if(matState(m) === 'delivered') return;
+    if(!m.needBy){ later.items.push(m); return; }
+    if(m.needBy < start){ overdue.items.push(m); return; }
+    const b = buckets.find(x => m.needBy >= x.start && m.needBy <= x.end);
+    (b || later).items.push(m);
+  });
+  return [overdue].concat(buckets).concat([later]).filter(b => b.items.length);
+}
+
+/* ---- client payments ---- */
+const termAmount = t => (t.amount !== null && t.amount !== undefined && t.amount !== '') ? r2(num(t.amount)) : r2(num(project.contractValue) * num(t.pct) / 100);
+function termState(t){
+  const due = termAmount(t), rec = num(t.received), inv = num(t.invoiced);
+  if(due > 0 && rec >= due - 0.005) return 'paid';
+  if(rec > 0) return 'part';
+  if(inv > 0) return 'invoiced';
+  return 'pending';
+}
+const termStateLabel = s => ({ pending:'Not invoiced', invoiced:'Invoiced', part:'Part paid', paid:'Paid' })[s] || s;
+function paymentTotals(){
+  const ts = project.terms;
+  const due = r2(ts.reduce((s, t) => s + termAmount(t), 0));
+  const invoiced = r2(ts.reduce((s, t) => s + num(t.invoiced), 0));
+  const received = r2(ts.reduce((s, t) => s + num(t.received), 0));
+  const contract = r2(num(project.contractValue));
+  return { due, invoiced, received,
+    outstanding: r2(invoiced - received),
+    unbilled: r2(contract - invoiced),
+    pctReceived: contract ? r2(received / contract * 100) : 0,
+    pctInvoiced: contract ? r2(invoiced / contract * 100) : 0,
+    unallocated: r2(contract - due) };
+}
+/* Is the money keeping up with the work? */
+function cashVsWork(){
+  const pr = progress(), pt = paymentTotals();
+  const earned = r2(num(project.contractValue) * pr.actual / 100);
+  return { workPct:pr.actual, cashPct:pt.pctReceived, earned, received:pt.received, gap:r2(earned - pt.received) };
+}
+
+/* ---- subcontractors ---- */
+function subAccount(s){
+  const variations = r2((s.variations || []).filter(v => v.approved).reduce((a, v) => a + num(v.amount), 0));
+  const pending = r2((s.variations || []).filter(v => !v.approved).reduce((a, v) => a + num(v.amount), 0));
+  const revised = r2(num(s.contractSum) + variations);
+  const certs = (s.certs || []).slice().sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  const gross = r2(certs.reduce((m, c) => Math.max(m, num(c.grossToDate)), 0));   /* certificates are cumulative */
+  const retention = r2(gross * num(s.retentionPct) / 100);
+  const issues = r2((s.issues || []).filter(i => i.recover).reduce((a, i) => a + num(i.value), 0));
+  const issuesFree = r2((s.issues || []).filter(i => !i.recover).reduce((a, i) => a + num(i.value), 0));
+  const paid = r2((s.payments || []).reduce((a, p) => a + num(p.amount), 0));
+  const netCertified = r2(gross - retention);
+  const balance = r2(netCertified - issues - paid);
+  return { variations, pending, revised, gross, retention, netCertified, issues, issuesFree, paid, balance,
+    pctCertified: revised ? r2(gross / revised * 100) : 0,
+    remaining: r2(revised - gross) };
+}
+function subsTotals(){
+  const a = project.subs.map(subAccount);
+  return {
+    count: project.subs.length,
+    revised: r2(a.reduce((s, x) => s + x.revised, 0)),
+    gross: r2(a.reduce((s, x) => s + x.gross, 0)),
+    retention: r2(a.reduce((s, x) => s + x.retention, 0)),
+    paid: r2(a.reduce((s, x) => s + x.paid, 0)),
+    balance: r2(a.reduce((s, x) => s + x.balance, 0)),
+    issues: r2(a.reduce((s, x) => s + x.issues, 0))
+  };
+}
+/* headline margin: what is left of the contract after subbies and materials */
+/* Margin uses what materials COST us, not the price they were quoted at.
+   Lines with no buy price are counted so the figure is never silently wrong. */
+function projectMargin(){
+  const contract = r2(num(project.contractValue));
+  const ex = project.vatIncluded ? r2(contract / (1 + num(settings.vatPct) / 100)) : contract;
+  const subs = subsTotals().revised;
+  const pc = procurementTotals();
+  const margin = r2(ex - subs - pc.cost);
+  return { contract, ex, subs, mats:pc.cost, sell:pc.value, uncosted:pc.uncosted, total:pc.counts.total,
+    cost:r2(subs + pc.cost), margin, pct: ex ? r2(margin / ex * 100) : 0 };
+}
+
+/* =====================================================================
+   UI rendering.
+   Typing never rebuilds the screen: fields write straight into `project`
+   and only the read-only figures ([data-calc]) are refreshed.
+   ===================================================================== */
+const TABS = [['dashboard','Dashboard'],['procure','Procurement'],['programme','Programme'],['subs','Subcontractors'],['payments','Payments'],['buying','All projects']];
+const CUR = () => settings.currency || 'KSh';
+
+function A(o){ return Object.keys(o).filter(k => o[k] !== undefined && o[k] !== null).map(k => 'data-' + k + '="' + esc(o[k]) + '"').join(' '); }
+function inp(o, val, cls, ph, extra){
+  return '<input type="text" autocomplete="off" spellcheck="false"' + (o.num ? ' inputmode="decimal"' : '') + ' class="' + (cls || '') + '" ' + A(o) + ' value="' + esc(val == null ? '' : val) + '" placeholder="' + esc(ph || '') + '" ' + (extra || '') + '>';
+}
+function dat(o, val){ return '<input type="date" autocomplete="off" ' + A(o) + ' value="' + esc(val || '') + '">'; }
+function taInp(o, val, ph){ return '<textarea rows="1" class="autosize" autocomplete="off" ' + A(o) + ' placeholder="' + esc(ph || '') + '">' + esc(val == null ? '' : val) + '</textarea>'; }
+function autosize(el){ el.style.height = 'auto'; el.style.height = (el.scrollHeight + (el.offsetHeight - el.clientHeight)) + 'px'; }
+function autosizeAll(){ $$('textarea.autosize').forEach(autosize); }
+function F(label, o, val, opts){
+  opts = opts || {};
+  const f = opts.type === 'date' ? dat(o, val) : inp(o, val, opts.cls || '', opts.ph || '', opts.extra || '');
+  return '<label class="fld ' + (opts.span || '') + '"><span>' + esc(label) + '</span>' + f + '</label>';
+}
+function CHK(label, o, val, span){ return '<label class="fld chk ' + (span || '') + '"><input type="checkbox" ' + A(o) + (val ? ' checked' : '') + '><span>' + esc(label) + '</span></label>'; }
+function TA(label, o, val, rows, ph, span){ return '<label class="fld ' + (span || '') + '"><span>' + esc(label) + '</span><textarea rows="' + (rows || 3) + '" autocomplete="off" ' + A(o) + ' placeholder="' + esc(ph || '') + '">' + esc(val) + '</textarea></label>'; }
+function SEL(o, options, cur, extra){
+  return '<select ' + A(o) + ' ' + (extra || '') + '>' + options.map(x => {
+    const v = Array.isArray(x) ? x[0] : x, l = Array.isArray(x) ? x[1] : x;
+    return '<option value="' + esc(v) + '"' + (String(v) === String(cur) ? ' selected' : '') + '>' + esc(l) + '</option>';
+  }).join('') + '</select>';
+}
+const stat = (k, v, s, cls) => '<div class="stat ' + (cls || '') + '"><div class="k">' + k + '</div><div class="v">' + v + '</div>' + (s ? '<div class="s">' + s + '</div>' : '') + '</div>';
+
+/* ---------- chrome ---------- */
+function renderTopbar(){
+  const n = $('#projName'); if(n) n.textContent = projectLabel(project);
+  document.title = projectLabel(project) + ' — Project Tracker';
+  updateHistBtns();
+}
+function renderTabs(){
+  const la = project.materials.filter(m => matUrgency(m) === 'late').length;
+  $('#tabs').innerHTML = TABS.map(t => {
+    const pip = (t[0] === 'procure' && la) ? '<span class="pip">' + la + '</span>' : '';
+    return '<button class="tab ' + (ui.tab === t[0] ? 'active' : '') + '" data-action="tab" data-tab="' + t[0] + '">' + t[1] + pip + '</button>';
+  }).join('');
+}
+function render(){
+  renderTopbar(); renderTabs();
+  const fn = { dashboard:tabDashboard, procure:tabProcure, programme:tabProgramme, subs:tabSubs, payments:tabPayments, buying:tabBuying }[ui.tab];
+  $('#panel').innerHTML = fn();
+  refreshComputed(); autosizeAll(); renderModal();
+  if(ui.focus){ const el = $(ui.focus.sel); if(el){ el.focus(); if(ui.focus.select && el.select) el.select(); } ui.focus = null; }
+}
+
+/* ---------- live figures ---------- */
+function calcVal(el){
+  const d = el.dataset;
+  switch(d.calc){
+    case 'matOut':   { const m = project.materials.find(x => x.id === d.i); return m ? (matOutstanding(m) ? fmt(matOutstanding(m), 2) : '—') : ''; }
+    case 'matVal':   { const m = project.materials.find(x => x.id === d.i); return m ? fmt(matValue(m)) : ''; }
+    case 'matState': { const m = project.materials.find(x => x.id === d.i); return m ? matStateLabel(matState(m)) : ''; }
+    case 'matTotal': return fmt(procurementTotals().value);
+    case 'matCost':  { const m = project.materials.find(x => x.id === d.i); return m ? (num(m.cost) ? fmt(matCost(m)) : '\u2014') : ''; }
+    case 'matCostTot': return fmt(procurementTotals().cost);
+    case 'termAmt':  { const t = project.terms.find(x => x.id === d.i); return t ? fmt(termAmount(t)) : ''; }
+    case 'termBal':  { const t = project.terms.find(x => x.id === d.i); return t ? fmt(r2(termAmount(t) - num(t.received))) : ''; }
+    case 'payDue':   return fmt(paymentTotals().due);
+    case 'payInv':   return fmt(paymentTotals().invoiced);
+    case 'payRec':   return fmt(paymentTotals().received);
+    case 'payOut':   return fmt(paymentTotals().outstanding);
+    case 'subRev':   { const s = project.subs.find(x => x.id === d.i); return s ? fmt(subAccount(s).revised) : ''; }
+    case 'subBal':   { const s = project.subs.find(x => x.id === d.i); return s ? fmt(subAccount(s).balance) : ''; }
+    case 'varTot':   { const s = curSub(); return s ? fmt(subAccount(s).variations) : ''; }
+    case 'certNet':  { const s = curSub(); return s ? fmt(subAccount(s).netCertified) : ''; }
+    case 'payTot':   { const s = curSub(); return s ? fmt(subAccount(s).paid) : ''; }
+    case 'issTot':   { const s = curSub(); return s ? fmt(subAccount(s).issues) : ''; }
+    case 'actPct':   return fmt(progress().actual, 1) + '%';
+  }
+  return '';
+}
+function refreshComputed(){ $$('[data-calc]').forEach(el => { const v = calcVal(el); if(el.textContent !== v) el.textContent = v; }); }
+
+/* ---------- Dashboard ---------- */
+function tabDashboard(){
+  const P = { s:'proj' };
+  const pr = progress(), pt = paymentTotals(), pc = procurementTotals(), st = subsTotals(), mg = projectMargin(), cw = cashVsWork();
+  const daysLeft = daysBetween(todayISO(), project.endDate);
+  const late = pc.counts.late;
+  const alerts = [];
+  if(late) alerts.push(late + ' material line' + (late === 1 ? '' : 's') + ' already past the date they were needed on site.');
+  if(pr.variance < -10) alerts.push('Work is ' + fmt(Math.abs(pr.variance), 1) + '% behind where the programme says it should be.');
+  if(cw.gap > 0 && num(project.contractValue)) alerts.push('You have built ' + fmt(cw.earned) + ' but received ' + fmt(cw.received) + ' — ' + fmt(cw.gap) + ' of work is unpaid.');
+  if(st.balance > 0) alerts.push(fmt(st.balance) + ' is certified and due to subcontractors.');
+  if(daysLeft < 0 && pr.actual < 100) alerts.push('The completion date passed ' + Math.abs(daysLeft) + ' days ago and the job is at ' + fmt(pr.actual, 1) + '%.');
+
+  return '<div class="wrap">' +
+    '<div class="stats">' +
+      stat('Progress', fmt(pr.actual, 1) + '%', 'Programme says ' + fmt(pr.planned, 1) + '%' + (pr.variance < 0 ? ' — behind' : pr.variance > 0 ? ' — ahead' : ''), pr.variance < -5 ? 'bad' : pr.variance > 0 ? 'good' : '') +
+      stat('Received from client', CUR() + ' ' + fmt0(pt.received), fmt(pt.pctReceived, 1) + '% of the contract', pt.received > 0 ? '' : 'warn') +
+      stat('Due to subcontractors', CUR() + ' ' + fmt0(st.balance), 'Retention held ' + fmt0(st.retention), st.balance > 0 ? 'warn' : 'good') +
+      stat('Materials delivered', fmt(pc.pct, 0) + '%', pc.counts.delivered + ' of ' + pc.counts.total + ' lines' + (late ? ' · ' + late + ' late' : ''), late ? 'bad' : '') +
+    '</div>' +
+    (alerts.length ? '<div class="help' + (late || pr.variance < -10 ? ' red' : '') + '"><b>Needs attention</b><ul style="margin:6px 0 0;padding-left:18px">' + alerts.map(a => '<li>' + esc(a) + '</li>').join('') + '</ul></div>' : '') +
+    '<div class="split"><div>' +
+      '<section class="card"><h2>Project</h2><p class="sub">Contract value drives the payment terms and the margin below.</p><div class="grid g3">' +
+        F('Project name', Object.assign({ f:'name' }, P), project.name, { span:'span2' }) +
+        F('Client', Object.assign({ f:'client' }, P), project.client) +
+        F('Location', Object.assign({ f:'location' }, P), project.location) +
+        F('Our reference', Object.assign({ f:'ref' }, P), project.ref) +
+        '<label class="fld"><span>Status</span>' + SEL(Object.assign({ f:'status', rr:1 }, P), [['confirmed','Confirmed — not started'],['running','On site'],['snagging','Snagging'],['complete','Complete'],['hold','On hold']], project.status) + '</label>' +
+        F('Contract value (' + CUR() + ')', Object.assign({ f:'contractValue', num:1 }, P), numDisp(project.contractValue), { cls:'r' }) +
+        F('Roof area (sqm)', Object.assign({ f:'roofArea', num:1 }, P), numDisp(project.roofArea), { cls:'r' }) +
+        CHK('Contract value includes VAT', Object.assign({ f:'vatIncluded' }, P), project.vatIncluded) +
+        F('Start on site', Object.assign({ f:'startDate' }, P), project.startDate, { type:'date' }) +
+        F('Completion', Object.assign({ f:'endDate' }, P), project.endDate, { type:'date' }) +
+      '</div></section>' +
+      '<section class="card"><h2>Where the money goes</h2><p class="sub">A rough margin: the contract less what the subcontractors are owed and what the materials cost.</p>' +
+        '<div class="tablewrap"><table class="t" style="min-width:420px"><tbody>' +
+        '<tr><td>Contract value' + (project.vatIncluded ? ' (excl. VAT at ' + num(settings.vatPct) + '%)' : '') + '</td><td class="r"><b>' + fmt(mg.ex) + '</b></td></tr>' +
+        '<tr><td>Subcontractors (contract sums + approved variations)</td><td class="r">' + fmt(mg.subs) + '</td></tr>' +
+        '<tr><td>Materials at buy price' + (mg.uncosted ? ' <span class="pill amber">' + mg.uncosted + ' of ' + mg.total + ' lines not priced</span>' : '') + '</td><td class="r">' + fmt(mg.mats) + '</td></tr>' +
+        '</tbody><tfoot><tr><td>Left for overheads and margin</td><td class="r" style="color:' + (mg.margin < 0 ? 'var(--red)' : 'var(--green)') + '">' + fmt(mg.margin) + ' &nbsp;(' + fmt(mg.pct, 1) + '%)</td></tr></tfoot></table></div>' +
+        (mg.uncosted ? '<div class="help">This margin flatters you until every material line has a buy price. Fill in the <b>Buy price</b> column on the Procurement tab \u2014 the same schedule sells for ' + fmt(mg.sell) + '.</div>' : '') +
+        '<p class="hint">Labour you carry yourself, transport and site overheads are not in this — treat it as a ceiling, not a profit.</p></section>' +
+      '<section class="card"><h2>Notes</h2>' + TA('', { s:'proj', f:'notes' }, project.notes, 4, 'Scope, site constraints, anything the team should know.') + '</section>' +
+    '</div><aside class="side">' +
+      '<section class="card ledger"><h2>Progress</h2>' +
+        '<div class="row"><span>Actual</span><b data-calc="actPct"></b></div>' +
+        '<div class="dual"><span class="act" style="width:' + pr.actual + '%"></span><span class="plan" style="left:' + pr.planned + '%" title="programme"></span></div>' +
+        '<div class="mini">The marker is where the programme says you should be (' + fmt(pr.planned, 1) + '%).</div>' +
+        '<div class="row" style="margin-top:10px"><span>Days to completion</span><b>' + (daysLeft >= 0 ? daysLeft : 'overdue ' + Math.abs(daysLeft)) + '</b></div>' +
+        '<div class="row"><span>Invoiced</span><b>' + fmt(pt.invoiced) + '</b></div>' +
+        '<div class="row"><span>Outstanding invoices</span><b>' + fmt(pt.outstanding) + '</b></div>' +
+        '<button class="btn primary" data-action="report">Project report</button>' +
+      '</section></aside></div></div>';
+}
+
+/* ---------- Procurement ---------- */
+function tabProcure(){
+  const pc = procurementTotals();
+  const toks = ui.matFilter.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  let list = project.materials;
+  if(ui.matStatus) list = list.filter(m => matState(m).indexOf(ui.matStatus) === 0);
+  if(toks.length) list = list.filter(m => { const h = (m.code + ' ' + m.desc + ' ' + m.supplier).toLowerCase(); return toks.every(t => h.includes(t)); });
+  const rows = list.length ? list.map(m => matRow(m)).join('')
+    : '<tr><td colspan="11" class="empty">' + (project.materials.length ? 'No materials match that filter.' : 'No materials yet — import a confirmed quote, or add a line.') + '</td></tr>';
+  const la = lookAhead(settings.lookAheadWeeks);
+  const laHtml = la.length ? la.map(b => '<div class="week ' + (b.label === 'Overdue' ? 'od' : '') + '"><h3>' + esc(b.label) + '<small>' + b.items.length + ' line' + (b.items.length === 1 ? '' : 's') + '</small></h3><ul>' +
+      b.items.map(m => '<li><b>' + esc(m.code || '—') + '</b><span class="d">' + esc(m.desc) + '</span><span class="q">' + fmt(matOutstanding(m), 2) + ' ' + esc(m.unit) + ' short</span>' +
+      '<span class="pill ' + pillFor(matState(m)) + '">' + matStateLabel(matState(m)) + '</span></li>').join('') + '</ul></div>').join('')
+    : '<div class="empty">Nothing outstanding — every material line is delivered.</div>';
+
+  return '<div class="wrap">' +
+    '<div class="stats">' +
+      stat('Schedule value', CUR() + ' ' + fmt0(pc.value), 'costs ' + fmt0(pc.cost) + ' to buy' + (pc.uncosted ? ' \u00b7 ' + pc.uncosted + ' not priced' : '')) +
+      stat('Delivered', fmt(pc.pct, 0) + '%', CUR() + ' ' + fmt0(pc.deliveredValue) + ' on site') +
+      stat('Still to order', String(pc.counts.toOrder), 'lines not ordered at all', pc.counts.toOrder ? 'warn' : 'good') +
+      stat('Late', String(pc.counts.late), 'past the need-by date', pc.counts.late ? 'bad' : 'good') +
+    '</div>' +
+    '<section class="card"><h2>Look-ahead — next ' + num(settings.lookAheadWeeks) + ' weeks</h2>' +
+      '<p class="sub">Everything not yet delivered, grouped by the week it is needed on site. Order the top group first.</p>' + laHtml + '</section>' +
+    '<section class="card"><h2>Material schedule</h2><p class="sub">Quantities come across from the confirmed quote. Fill in the supplier, the date it is needed and what has actually been ordered and delivered.</p>' +
+      '<div class="toolbar"><input type="text" id="matQ" autocomplete="off" placeholder="Filter by code, description or supplier…" value="' + esc(ui.matFilter) + '">' +
+      SEL({ onchange:'matstatus' }, [['','All statuses']].concat(MAT_STATES), ui.matStatus) +
+      '<button class="btn primary" data-action="mat-add">+ Add material</button>' +
+      '<button class="btn" data-action="mat-import">Import from a quote…</button>' +
+      '<button class="btn" data-action="mat-csv">Export CSV</button></div>' +
+      '<div class="tablewrap"><table class="t" style="min-width:1340px"><colgroup><col style="width:26px"><col style="width:110px"><col><col style="width:58px"><col style="width:80px"><col style="width:80px"><col style="width:80px"><col style="width:70px"><col style="width:94px"><col style="width:98px"><col style="width:140px"><col style="width:132px"><col style="width:118px"></colgroup>' +
+      '<thead><tr><th></th><th>Code</th><th>Description</th><th>Unit</th><th class="r">Required</th><th class="r">Ordered</th><th class="r">Delivered</th><th class="r">Short</th><th class="r">Buy price</th><th class="r">Cost</th><th>Supplier</th><th>Needed on site</th><th></th></tr></thead><tbody>' + rows + '</tbody>' +
+      '<tfoot><tr><td colspan="8" class="r">Quoted value <span data-calc="matTotal"></span></td><td colspan="2" class="r">Cost <span data-calc="matCostTot"></span></td><td colspan="3"></td></tr></tfoot></table></div></section></div>';
+}
+const pillFor = st => ({ 'to-order':'grey', 'part-ordered':'amber', 'ordered':'blue', 'part':'amber', 'delivered':'green' })[st] || 'grey';
+function matRow(m, i){
+  const M = { s:'mat', i:m.id };
+  const u = matUrgency(m), st = matState(m);
+  return '<tr class="' + (u === 'late' ? 'late' : u === 'soon' ? 'soon' : '') + '"><td class="idx">' + (u === 'late' ? '!' : '') + '</td>' +
+    '<td>' + inp(Object.assign({ f:'code' }, M), m.code, '', 'Code') + '</td>' +
+    '<td>' + taInp(Object.assign({ f:'desc' }, M), m.desc, 'Description') + '</td>' +
+    '<td>' + inp(Object.assign({ f:'unit' }, M), m.unit, '', 'pcs') + '</td>' +
+    '<td>' + inp(Object.assign({ f:'qtyReq', num:1 }, M), numDisp(m.qtyReq), 'r', '0') + '</td>' +
+    '<td>' + inp(Object.assign({ f:'qtyOrdered', num:1 }, M), numDisp(m.qtyOrdered), 'r', '0') + '</td>' +
+    '<td>' + inp(Object.assign({ f:'qtyDelivered', num:1 }, M), numDisp(m.qtyDelivered), 'r', '0') + '</td>' +
+    '<td class="r"><span class="calc soft" data-calc="matOut" data-i="' + m.id + '"></span></td>' +
+    '<td>' + inp(Object.assign({ f:'cost', num:1 }, M), numDisp(m.cost), 'r', '0.00') + '</td>' +
+    '<td class="r"><span class="calc soft" data-calc="matCost" data-i="' + m.id + '"></span></td>' +
+    '<td>' + inp(Object.assign({ f:'supplier' }, M), m.supplier, '', 'Supplier') + '</td>' +
+    '<td>' + dat(Object.assign({ f:'needBy' }, M), m.needBy) + '</td>' +
+    '<td class="acts"><span class="pill ' + pillFor(st) + '">' + matStateLabel(st) + '</span> ' +
+    '<button class="ib" data-action="mat-done" data-i="' + m.id + '" title="Mark the full quantity ordered and delivered">✓</button>' +
+    '<button class="ib del" data-action="mat-del" data-i="' + m.id + '" title="Remove line">✕</button></td></tr>';
+}
+
+/* ---------- Subcontractors ---------- */
+const curSub = () => project.subs.find(s => s.id === ui.subSel) || project.subs[0] || null;
+function tabSubs(){
+  const st = subsTotals();
+  const chips = project.subs.map(s => {
+    const a = subAccount(s);
+    return '<button class="subchip ' + (curSub() && s.id === curSub().id ? 'on' : '') + '" data-action="sub-pick" data-i="' + s.id + '">' +
+      '<span class="t">' + esc(s.name || 'Unnamed') + '</span><span class="s">' + esc(s.trade) + '</span>' +
+      '<span class="n">' + (a.balance < 0 ? CUR() + ' ' + fmt0(-a.balance) + ' in advance' : CUR() + ' ' + fmt0(a.balance) + ' due') + '</span></button>';
+  }).join('');
+  const s = curSub();
+  const head = '<div class="stats">' +
+    stat('Subcontractors', String(st.count), '') +
+    stat('Committed', CUR() + ' ' + fmt0(st.revised), 'contract sums + variations') +
+    stat('Certified', CUR() + ' ' + fmt0(st.gross), 'retention held ' + fmt0(st.retention)) +
+    stat('Due now', CUR() + ' ' + fmt0(st.balance), st.balance < 0 ? 'net paid ahead of certification' : 'certified, less paid', st.balance > 0 ? 'warn' : 'good') +
+  '</div>';
+  if(!s) return '<div class="wrap">' + head + '<section class="card"><div class="empty">No subcontractors yet.</div><div class="row-actions"><button class="btn primary" data-action="sub-add">+ Add subcontractor</button></div></section></div>';
+  const a = subAccount(s), S = { s:'sub', i:s.id };
+  return '<div class="wrap">' + head +
+    '<div class="sublist">' + chips + '<button class="btn" data-action="sub-add">+ Add subcontractor</button></div>' +
+    '<div class="split"><div>' +
+    '<section class="card"><h2>' + esc(s.name || 'Subcontractor') + '</h2><div class="grid g4">' +
+      F('Name', Object.assign({ f:'name' }, S), s.name, { span:'span2' }) +
+      '<label class="fld"><span>Trade</span>' + SEL(Object.assign({ f:'trade', rr:1 }, S), TRADES, s.trade) + '</label>' +
+      F('Contact', Object.assign({ f:'contact' }, S), s.contact) +
+      F('Contract sum (' + CUR() + ')', Object.assign({ f:'contractSum', num:1 }, S), numDisp(s.contractSum), { cls:'r' }) +
+      F('Retention %', Object.assign({ f:'retentionPct', num:1 }, S), numDisp(s.retentionPct), { cls:'r' }) +
+    '</div></section>' +
+    subVariations(s) + subCerts(s) + subPayments(s) + subIssues(s) +
+    '</div><aside class="side"><section class="card ledger"><h2>Account</h2>' +
+      '<div class="row"><span>Contract sum</span><b>' + fmt(s.contractSum) + '</b></div>' +
+      '<div class="row"><span>Approved variations</span><b>' + fmt(a.variations) + '</b></div>' +
+      '<div class="row"><span>Revised sum</span><b>' + fmt(a.revised) + '</b></div>' +
+      '<div class="row"><span>Work certified</span><b>' + fmt(a.gross) + ' <small style="font-weight:600;color:var(--muted)">(' + fmt(a.pctCertified, 0) + '%)</small></b></div>' +
+      '<div class="row"><span>Less retention ' + fmt(num(s.retentionPct), 0) + '%</span><b>-' + fmt(a.retention) + '</b></div>' +
+      '<div class="row"><span>Less materials issued</span><b>-' + fmt(a.issues) + '</b></div>' +
+      '<div class="row"><span>Less paid</span><b>-' + fmt(a.paid) + '</b></div>' +
+      '<div class="row big ' + (a.balance < 0 ? 'neg' : '') + '"><span>' + (a.balance < 0 ? 'Paid ahead of work done' : 'Balance due') + '</span><b>' + fmt(Math.abs(a.balance)) + '</b></div>' +
+      '<div class="mini">' + (a.pending ? fmt(a.pending) + ' of variations are still unapproved and are not counted.' : 'Retention is released outside this tool when the defects period ends.') + '</div>' +
+      '<button class="btn danger" data-action="sub-del" data-i="' + s.id + '">Remove this subcontractor</button>' +
+    '</section></aside></div></div>';
+}
+function subVariations(s){
+  const rows = s.variations.length ? s.variations.map(v => {
+    const V = { s:'var', i:s.id, j:v.id };
+    return '<tr><td>' + dat(Object.assign({ f:'date' }, V), v.date) + '</td>' +
+      '<td>' + taInp(Object.assign({ f:'desc' }, V), v.desc, 'What changed') + '</td>' +
+      '<td>' + inp(Object.assign({ f:'amount', num:1 }, V), numDisp(v.amount), 'r', '0.00') + '</td>' +
+      '<td style="text-align:center">' + '<input type="checkbox" ' + A(Object.assign({ f:'approved' }, V)) + (v.approved ? ' checked' : '') + '></td>' +
+      '<td class="acts"><button class="ib del" data-action="var-del" data-i="' + s.id + '" data-j="' + v.id + '">✕</button></td></tr>';
+  }).join('') : '<tr><td colspan="5" class="empty">No variations.</td></tr>';
+  return '<section class="card"><h2>Variations</h2><p class="sub">Only ticked (approved) variations are added to the contract sum.</p>' +
+    '<div class="tablewrap"><table class="t" style="min-width:600px"><colgroup><col style="width:140px"><col><col style="width:130px"><col style="width:90px"><col style="width:60px"></colgroup>' +
+    '<thead><tr><th>Date</th><th>Description</th><th class="r">Amount</th><th style="text-align:center">Approved</th><th></th></tr></thead><tbody>' + rows + '</tbody>' +
+    '<tfoot><tr><td colspan="2">Approved total</td><td class="r"><span data-calc="varTot"></span></td><td colspan="2"></td></tr></tfoot></table></div>' +
+    '<div class="row-actions"><button class="btn" data-action="var-add" data-i="' + s.id + '">+ Add variation</button></div></section>';
+}
+function subCerts(s){
+  const sorted = s.certs.slice().sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  const rows = sorted.length ? sorted.map((c, i) => {
+    const C = { s:'cert', i:s.id, j:c.id };
+    const prev = i > 0 ? num(sorted[i - 1].grossToDate) : 0;
+    return '<tr><td>' + inp(Object.assign({ f:'no' }, C), c.no, '', String(i + 1)) + '</td>' +
+      '<td>' + dat(Object.assign({ f:'date' }, C), c.date) + '</td>' +
+      '<td>' + inp(Object.assign({ f:'grossToDate', num:1 }, C), numDisp(c.grossToDate), 'r', '0.00') + '</td>' +
+      '<td class="r">' + fmt(r2(num(c.grossToDate) - prev)) + '</td>' +
+      '<td>' + taInp(Object.assign({ f:'note' }, C), c.note, 'Work covered') + '</td>' +
+      '<td class="acts"><button class="ib del" data-action="cert-del" data-i="' + s.id + '" data-j="' + c.id + '">✕</button></td></tr>';
+  }).join('') : '<tr><td colspan="6" class="empty">No certificates yet.</td></tr>';
+  return '<section class="card"><h2>Certificates</h2><p class="sub">Enter the <b>cumulative</b> value of work done to date on each certificate, the way a valuation works. The column beside it shows what that certificate adds.</p>' +
+    '<div class="tablewrap"><table class="t" style="min-width:700px"><colgroup><col style="width:70px"><col style="width:140px"><col style="width:140px"><col style="width:120px"><col><col style="width:60px"></colgroup>' +
+    '<thead><tr><th>No.</th><th>Date</th><th class="r">Gross to date</th><th class="r">This certificate</th><th>Note</th><th></th></tr></thead><tbody>' + rows + '</tbody>' +
+    '<tfoot><tr><td colspan="2">Net certified after retention</td><td class="r"><span data-calc="certNet"></span></td><td colspan="3"></td></tr></tfoot></table></div>' +
+    '<div class="row-actions"><button class="btn" data-action="cert-add" data-i="' + s.id + '">+ Add certificate</button></div></section>';
+}
+function subPayments(s){
+  const rows = s.payments.length ? s.payments.map(p => {
+    const P = { s:'pay', i:s.id, j:p.id };
+    return '<tr><td>' + dat(Object.assign({ f:'date' }, P), p.date) + '</td>' +
+      '<td>' + SEL(Object.assign({ f:'kind', rr:1 }, P), [['payment','Payment against certificate'],['advance','Advance / mobilisation']], p.kind) + '</td>' +
+      '<td>' + inp(Object.assign({ f:'ref' }, P), p.ref, '', 'Cheque / M-Pesa ref') + '</td>' +
+      '<td>' + inp(Object.assign({ f:'amount', num:1 }, P), numDisp(p.amount), 'r', '0.00') + '</td>' +
+      '<td class="acts"><button class="ib del" data-action="pay-del" data-i="' + s.id + '" data-j="' + p.id + '">✕</button></td></tr>';
+  }).join('') : '<tr><td colspan="5" class="empty">Nothing paid yet.</td></tr>';
+  return '<section class="card"><h2>Payments made</h2><p class="sub">Advances count as money paid and reduce the balance, so they are recovered automatically as work is certified.</p>' +
+    '<div class="tablewrap"><table class="t" style="min-width:640px"><colgroup><col style="width:140px"><col style="width:230px"><col><col style="width:130px"><col style="width:60px"></colgroup>' +
+    '<thead><tr><th>Date</th><th>Type</th><th>Reference</th><th class="r">Amount</th><th></th></tr></thead><tbody>' + rows + '</tbody>' +
+    '<tfoot><tr><td colspan="3">Total paid</td><td class="r"><span data-calc="payTot"></span></td><td></td></tr></tfoot></table></div>' +
+    '<div class="row-actions"><button class="btn" data-action="pay-add" data-i="' + s.id + '">+ Record a payment</button></div></section>';
+}
+function subIssues(s){
+  const rows = s.issues.length ? s.issues.map(x => {
+    const I = { s:'iss', i:s.id, j:x.id };
+    return '<tr><td>' + dat(Object.assign({ f:'date' }, I), x.date) + '</td>' +
+      '<td>' + taInp(Object.assign({ f:'desc' }, I), x.desc, 'What was issued') + '</td>' +
+      '<td>' + inp(Object.assign({ f:'value', num:1 }, I), numDisp(x.value), 'r', '0.00') + '</td>' +
+      '<td style="text-align:center"><input type="checkbox" ' + A(Object.assign({ f:'recover' }, I)) + (x.recover ? ' checked' : '') + '></td>' +
+      '<td class="acts"><button class="ib del" data-action="iss-del" data-i="' + s.id + '" data-j="' + x.id + '">✕</button></td></tr>';
+  }).join('') : '<tr><td colspan="5" class="empty">Nothing issued.</td></tr>';
+  return '<section class="card"><h2>Materials issued to this subcontractor</h2><p class="sub">Tick <b>recover</b> where the value is to be deducted from what you owe them. Leave it clear for materials you supply free under the contract.</p>' +
+    '<div class="tablewrap"><table class="t" style="min-width:620px"><colgroup><col style="width:140px"><col><col style="width:130px"><col style="width:90px"><col style="width:60px"></colgroup>' +
+    '<thead><tr><th>Date</th><th>Description</th><th class="r">Value</th><th style="text-align:center">Recover</th><th></th></tr></thead><tbody>' + rows + '</tbody>' +
+    '<tfoot><tr><td colspan="2">Recoverable total</td><td class="r"><span data-calc="issTot"></span></td><td colspan="2"></td></tr></tfoot></table></div>' +
+    '<div class="row-actions"><button class="btn" data-action="iss-add" data-i="' + s.id + '">+ Issue materials</button></div></section>';
+}
+
+/* ---------- Payments (client side) ---------- */
+function tabPayments(){
+  const pt = paymentTotals(), cw = cashVsWork();
+  const rows = project.terms.length ? project.terms.map((t, i) => {
+    const T = { s:'term', i:t.id }, stt = termState(t);
+    return '<tr><td class="idx">' + (i + 1) + '</td>' +
+      '<td>' + taInp(Object.assign({ f:'label' }, T), t.label, 'e.g. Advance payment on order') + '</td>' +
+      '<td>' + inp(Object.assign({ f:'pct', num:1 }, T), numDisp(t.pct), 'r', '0') + '</td>' +
+      '<td>' + inp(Object.assign({ f:'amount', num:1 }, T), (t.amount === null || t.amount === undefined || t.amount === '') ? '' : t.amount, 'r', 'from %') + '</td>' +
+      '<td class="r"><span class="calc" data-calc="termAmt" data-i="' + t.id + '"></span></td>' +
+      '<td>' + inp(Object.assign({ f:'invoiceNo' }, T), t.invoiceNo, '', 'Inv no.') + '</td>' +
+      '<td>' + inp(Object.assign({ f:'invoiced', num:1 }, T), numDisp(t.invoiced), 'r', '0.00') + '</td>' +
+      '<td>' + inp(Object.assign({ f:'received', num:1 }, T), numDisp(t.received), 'r', '0.00') + '</td>' +
+      '<td>' + dat(Object.assign({ f:'receivedDate' }, T), t.receivedDate) + '</td>' +
+      '<td class="r"><span class="calc soft" data-calc="termBal" data-i="' + t.id + '"></span></td>' +
+      '<td class="acts"><span class="pill ' + ({ pending:'grey', invoiced:'blue', part:'amber', paid:'green' })[stt] + '">' + termStateLabel(stt) + '</span> ' +
+      '<button class="ib" data-action="term-move" data-i="' + t.id + '" data-dir="-1" title="Move up"' + (i === 0 ? ' disabled' : '') + '>↑</button>' +
+      '<button class="ib" data-action="term-move" data-i="' + t.id + '" data-dir="1" title="Move down"' + (i === project.terms.length - 1 ? ' disabled' : '') + '>↓</button>' +
+      '<button class="ib del" data-action="term-del" data-i="' + t.id + '">✕</button></td></tr>';
+  }).join('') : '<tr><td colspan="11" class="empty">No payment terms yet.</td></tr>';
+  const mismatch = Math.abs(pt.unallocated) > 1;
+  return '<div class="wrap">' +
+    '<div class="stats">' +
+      stat('Contract value', CUR() + ' ' + fmt0(project.contractValue), project.vatIncluded ? 'including VAT' : 'excluding VAT') +
+      stat('Invoiced', CUR() + ' ' + fmt0(pt.invoiced), fmt(pt.pctInvoiced, 0) + '% of the contract') +
+      stat('Received', CUR() + ' ' + fmt0(pt.received), fmt(pt.pctReceived, 0) + '% of the contract', pt.received ? 'good' : 'warn') +
+      stat('Outstanding', CUR() + ' ' + fmt0(pt.outstanding), 'invoiced but not in the bank', pt.outstanding > 0 ? 'bad' : 'good') +
+    '</div>' +
+    '<section class="card"><h2>Work done against money received</h2><p class="sub">The gap is work you have built and not yet been paid for — the thing that quietly funds the client.</p>' +
+      '<div class="grid g3">' +
+        '<div><div class="k" style="font-size:11.5px;font-weight:700;color:var(--muted)">WORK COMPLETE</div><div style="font-size:22px;font-weight:800">' + fmt(cw.workPct, 1) + '%</div><div class="bar"><i style="width:' + clampPct(cw.workPct) + '%"></i></div></div>' +
+        '<div><div class="k" style="font-size:11.5px;font-weight:700;color:var(--muted)">CASH RECEIVED</div><div style="font-size:22px;font-weight:800">' + fmt(cw.cashPct, 1) + '%</div><div class="bar ' + (cw.cashPct < cw.workPct ? 'a' : 'g') + '"><i style="width:' + clampPct(cw.cashPct) + '%"></i></div></div>' +
+        '<div><div class="k" style="font-size:11.5px;font-weight:700;color:var(--muted)">UNPAID WORK</div><div style="font-size:22px;font-weight:800;color:' + (cw.gap > 0 ? 'var(--red)' : 'var(--green)') + '">' + CUR() + ' ' + fmt0(Math.max(0, cw.gap)) + '</div><div class="s" style="font-size:12px;color:var(--ink-2)">built ' + fmt0(cw.earned) + ', received ' + fmt0(cw.received) + '</div></div>' +
+      '</div></section>' +
+    '<section class="card"><h2>Payment terms</h2><p class="sub">Give each stage a percentage of the contract, or type a fixed amount to override it. Record the invoice and what has actually come in.</p>' +
+      (mismatch ? '<div class="help">The stages add up to ' + fmt(pt.due) + ', which is ' + fmt(Math.abs(pt.unallocated)) + ' ' + (pt.unallocated > 0 ? 'less than' : 'more than') + ' the contract value of ' + fmt(project.contractValue) + '.</div>' : '') +
+      '<div class="tablewrap"><table class="t" style="min-width:1200px"><colgroup><col style="width:26px"><col><col style="width:64px"><col style="width:110px"><col style="width:120px"><col style="width:100px"><col style="width:120px"><col style="width:120px"><col style="width:140px"><col style="width:110px"><col style="width:190px"></colgroup>' +
+      '<thead><tr><th></th><th>Stage</th><th class="r">%</th><th class="r">Fixed amount</th><th class="r">Due</th><th>Invoice no.</th><th class="r">Invoiced</th><th class="r">Received</th><th>Received on</th><th class="r">Balance</th><th></th></tr></thead><tbody>' + rows + '</tbody>' +
+      '<tfoot><tr><td colspan="4">Totals</td><td class="r"><span data-calc="payDue"></span></td><td></td><td class="r"><span data-calc="payInv"></span></td><td class="r"><span data-calc="payRec"></span></td><td></td><td class="r"><span data-calc="payOut"></span></td><td></td></tr></tfoot></table></div>' +
+      '<div class="row-actions"><button class="btn primary" data-action="term-add">+ Add a stage</button><button class="btn" data-action="term-std">Use 50 / 30 / 20</button></div></section></div>';
+}
+
+/* ---------- modals ---------- */
+function modalShell(title, sub, body, foot, wide){
+  return '<div class="modal-ov" data-action="modal-bg"><div class="modal ' + (wide ? 'wide' : '') + '" role="dialog" aria-modal="true"><h3>' + title + '</h3>' + (sub ? '<p class="sub">' + sub + '</p>' : '') + body + '<div class="modal-foot">' + foot + '</div></div></div>';
+}
+function renderModal(){
+  const root = $('#modalRoot'); if(!root) return;
+  const m = ui.modal;
+  if(!m){ root.innerHTML = ''; return; }
+  let html = '';
+  if(m.type === 'projects') html = projectsModalHTML();
+  else if(m.type === 'settings') html = settingsModalHTML();
+  else if(m.type === 'newproj') html = modalShell('New project', 'Start a blank job. You can import the materials from a quote afterwards.',
+      '<div class="grid g2">' + F('Project name', { s:'modal', f:'name' }, m.name, { span:'span2', ph:'e.g. RATADO HOMES-SIAYA' }) +
+      F('Client', { s:'modal', f:'client' }, m.client) + F('Location', { s:'modal', f:'location' }, m.location) +
+      F('Contract value (' + CUR() + ')', { s:'modal', f:'contractValue', num:1 }, numDisp(m.contractValue), { cls:'r' }) +
+      F('Start on site', { s:'modal', f:'startDate' }, m.startDate, { type:'date' }) +
+      CHK('Add the standard programme and 50/30/20 payment terms', { s:'modal', f:'seed' }, m.seed, 'span2') + '</div>',
+      '<button class="btn" data-action="modal-close">Cancel</button><button class="btn primary" data-action="newproj-ok">Create project</button>');
+  root.innerHTML = html;
+}
+function projectsModalHTML(){
+  const idx = readIndex();
+  const rows = idx.map(e => '<div class="pr ' + (e.id === project.id ? 'cur' : '') + '"><div class="pn"><b>' + esc(e.name) + '</b><small>' + esc(e.client || 'No client yet') + ' · ' + esc(e.status || '') + ' · edited ' + esc(new Date(e.updated).toLocaleDateString('en-GB')) + '</small></div>' +
+    (e.id === project.id ? '<span class="pill blue">open</span>' : '<button class="btn sm" data-action="proj-open" data-id="' + e.id + '">Open</button>') +
+    '<button class="btn sm danger" data-action="proj-del" data-id="' + e.id + '">Delete</button></div>').join('');
+  let cl = '';
+  if(cloudOn()){
+    const crows = (cloud.projects || []).map(e => {
+      const isOpen = e.id === project.id;
+      return '<div class="pr ' + (isOpen ? 'cur' : '') + '"><div class="pn"><b>' + esc(e.name || 'Untitled project') + '</b><small>' + esc(e.client || 'No client yet') + ' \u00b7 ' + esc(e.status || '') + ' \u00b7 saved ' + esc(new Date(e.updated_at).toLocaleString('en-GB')) + '</small></div>' +
+        (isOpen ? '<span class="pill blue">this one</span>' : '<button class="btn sm" data-action="cloud-open" data-id="' + esc(e.id) + '">Open</button>') +
+        '<button class="btn sm danger" data-action="cloud-del" data-id="' + esc(e.id) + '">Remove</button></div>';
+    }).join('');
+    cl = '<h3 style="margin:16px 0 2px;font-size:15px">In the cloud</h3>' +
+      '<p class="sub">Shared with everyone using this file. Opening one copies it onto this computer.</p>' +
+      (cloud.err ? '<div class="help red">' + esc(cloud.err) + '</div>' : '') +
+      '<div class="plist">' + (cloud.projects === null ? '<div class="empty">Press Refresh to see the shared projects.</div>' : (crows || '<div class="empty">Nothing shared yet.</div>')) + '</div>' +
+      '<div class="row-actions"><button class="btn" data-action="cloud-list">Refresh</button>' +
+      '<button class="btn solid" data-action="cloud-push">Save the open project to the cloud</button>' +
+      '<button class="btn" data-action="cloud-pull">Pull them all onto this computer</button></div>';
+  }
+  return modalShell('Projects', 'Each job is saved in this browser. Import a Quote Studio file to start one from a confirmed quote.',
+    '<div class="plist">' + (rows || '<div class="empty">No projects yet.</div>') + '</div>' + cl,
+    '<button class="btn solid" data-action="import-quote">Import a confirmed quote…</button><button class="btn" data-action="import-json">Open a tracker file…</button><button class="btn primary" data-action="new-project">New project</button><button class="btn" data-action="modal-close">Close</button>');
+}
+function cloudSettingsHTML(){
+  const c = settings.cloud || {};
+  const state = c.enabled ? '<span class="pill green">Sync is on</span>' : '<span class="pill amber">Sync is off</span>';
+  return '<h3 style="margin:18px 0 2px;font-size:15px">Share with the team (Supabase) ' + state + '</h3>' +
+    '<p class="sub">With this on, everyone using this file can open each other\u2019s projects, and the buying list can cover the whole company. Run the setup SQL once, then press Connect.</p>' +
+    '<div class="grid g2">' +
+      F('Project URL or reference', { s:'set', f:'cloud.url' }, c.url, { ph:'abcdefgh or https://abcdefgh.supabase.co' }) +
+      F('Publishable key', { s:'set', f:'cloud.key' }, c.key, { ph:'sb_publishable_\u2026' }) +
+      CHK('Use the shared projects', { s:'set', f:'cloud.enabled' }, c.enabled, 'span2') +
+    '</div>' +
+    (cloud.err ? '<div class="help red">' + esc(cloud.err) + '</div>' : '') +
+    '<div class="row-actions"><button class="btn solid" data-action="cloud-test">Connect and test</button>' +
+    '<button class="btn" data-action="cloud-sql">Show the setup SQL</button></div>' +
+    (ui.showSql ? '<label class="fld" style="margin-top:10px"><span>Paste this into Supabase \u2192 SQL Editor, then press Run</span><textarea rows="12" readonly onclick="this.select()">' + esc(CLOUD_SQL) + '</textarea></label>' : '') +
+    '<p class="hint">The publishable key is meant to sit in a page like this, but anyone holding the file can read and write that table \u2014 keep it inside the company.</p>';
+}
+function settingsModalHTML(){
+  return modalShell('Settings', 'Saved on this computer and used for new projects.',
+    '<div class="grid g2">' +
+      F('Company', { s:'set', f:'company' }, settings.company, { span:'span2' }) +
+      F('Prepared by', { s:'set', f:'preparedBy' }, settings.preparedBy) +
+      F('Currency label', { s:'set', f:'currency' }, settings.currency) +
+      F('VAT %', { s:'set', f:'vatPct', num:1 }, numDisp(settings.vatPct), { cls:'r' }) +
+      F('Default retention %', { s:'set', f:'retentionPct', num:1 }, numDisp(settings.retentionPct), { cls:'r' }) +
+      F('Look-ahead weeks', { s:'set', f:'lookAheadWeeks', num:1 }, numDisp(settings.lookAheadWeeks), { cls:'r' }) +
+    '</div>' + cloudSettingsHTML(),
+    '<button class="btn primary" data-action="modal-close">Done</button>');
+}
+
+/* =====================================================================
+   Programme: Gantt + milestones, and the printable project report
+   ===================================================================== */
+function tabProgramme(){
+  const pr = progress();
+  const rows = project.activities.length ? project.activities.map((a, i) => actRow(a, i)).join('')
+    : '<tr><td colspan="8" class="empty">No activities yet — add one, or load the standard roofing programme.</td></tr>';
+  const ms = project.milestones.length ? project.milestones.map(m => msRow(m)).join('')
+    : '<tr><td colspan="4" class="empty">No milestones.</td></tr>';
+  return '<div class="wrap">' +
+    '<div class="stats">' +
+      stat('Progress', fmt(pr.actual, 1) + '%', 'weighted by activity') +
+      stat('Programme says', fmt(pr.planned, 1) + '%', 'for today’s date') +
+      stat(pr.variance < 0 ? 'Behind by' : 'Ahead by', fmt(Math.abs(pr.variance), 1) + '%', pr.variance < 0 ? 'pull back the late bars' : 'on or ahead of plan', pr.variance < -5 ? 'bad' : pr.variance > 0 ? 'good' : '') +
+      stat('Finish', fmtDMY(project.endDate), (daysBetween(todayISO(), project.endDate) >= 0 ? daysBetween(todayISO(), project.endDate) + ' days to go' : Math.abs(daysBetween(todayISO(), project.endDate)) + ' days overdue'), daysBetween(todayISO(), project.endDate) < 0 ? 'bad' : '') +
+    '</div>' +
+    '<section class="card"><h2>Programme</h2><p class="sub">Bars are the planned dates; the solid fill inside each bar is how complete it is. The orange line is today.</p>' +
+      '<div class="chips"><button class="chip ' + (ui.ganttZoom === 'day' ? 'on' : '') + '" data-action="zoom" data-z="day">Days</button>' +
+      '<button class="chip ' + (ui.ganttZoom === 'week' ? 'on' : '') + '" data-action="zoom" data-z="week">Weeks</button>' +
+      '<button class="chip ' + (ui.ganttZoom === 'month' ? 'on' : '') + '" data-action="zoom" data-z="month">Months</button></div>' +
+      ganttHTML() +
+      '<div class="glegend"><span><i style="background:var(--blue)"></i>on programme</span><span><i style="background:var(--green)"></i>complete</span><span><i style="background:var(--red)"></i>behind</span><span><i style="background:var(--orange);width:3px"></i>today</span><span>◆ milestone</span></div></section>' +
+    '<section class="card"><h2>Activities</h2><p class="sub">Weight decides how much each activity counts towards overall progress — give the big trades a bigger number.</p>' +
+      '<div class="tablewrap"><table class="t" style="min-width:820px"><colgroup><col style="width:26px"><col><col style="width:150px"><col style="width:150px"><col style="width:74px"><col style="width:78px"><col style="width:86px"><col style="width:110px"></colgroup>' +
+      '<thead><tr><th></th><th>Activity</th><th>Start</th><th>Finish</th><th class="r">Days</th><th class="r">Weight</th><th class="r">% done</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+      '<div class="row-actions"><button class="btn primary" data-action="act-add">+ Add activity</button>' +
+      '<button class="btn" data-action="act-std">Load the standard roofing programme</button>' +
+      '<button class="btn" data-action="act-reflow">Re-flow dates from the start date</button></div></section>' +
+    '<section class="card"><h2>Milestones</h2>' +
+      '<div class="tablewrap"><table class="t" style="min-width:520px"><colgroup><col><col style="width:160px"><col style="width:90px"><col style="width:60px"></colgroup>' +
+      '<thead><tr><th>Milestone</th><th>Date</th><th style="text-align:center">Reached</th><th></th></tr></thead><tbody>' + ms + '</tbody></table></div>' +
+      '<div class="row-actions"><button class="btn" data-action="ms-add">+ Add milestone</button></div></section></div>';
+}
+function actRow(a, i){
+  const T = { s:'act', i:a.id };
+  const days = (a.start && a.end) ? daysBetween(a.start, a.end) + 1 : 0;
+  return '<tr><td class="idx">' + (i + 1) + '</td>' +
+    '<td>' + taInp(Object.assign({ f:'name' }, T), a.name, 'Activity') + '</td>' +
+    '<td>' + dat(Object.assign({ f:'start' }, T), a.start) + '</td>' +
+    '<td>' + dat(Object.assign({ f:'end' }, T), a.end) + '</td>' +
+    '<td class="r">' + (days > 0 ? days : '—') + '</td>' +
+    '<td>' + inp(Object.assign({ f:'weight', num:1 }, T), numDisp(a.weight), 'r', '1') + '</td>' +
+    '<td>' + inp(Object.assign({ f:'pct', num:1 }, T), numDisp(a.pct), 'r', '0') + '</td>' +
+    '<td class="acts"><button class="ib" data-action="act-move" data-i="' + a.id + '" data-dir="-1" title="Move up"' + (i === 0 ? ' disabled' : '') + '>↑</button>' +
+    '<button class="ib" data-action="act-move" data-i="' + a.id + '" data-dir="1" title="Move down"' + (i === project.activities.length - 1 ? ' disabled' : '') + '>↓</button>' +
+    '<button class="ib" data-action="act-done" data-i="' + a.id + '" title="Mark 100% done">✓</button>' +
+    '<button class="ib del" data-action="act-del" data-i="' + a.id + '">✕</button></td></tr>';
+}
+function msRow(m){
+  const T = { s:'ms', i:m.id };
+  return '<tr><td>' + taInp(Object.assign({ f:'name' }, T), m.name, 'Milestone') + '</td>' +
+    '<td>' + dat(Object.assign({ f:'date' }, T), m.date) + '</td>' +
+    '<td style="text-align:center"><input type="checkbox" ' + A(Object.assign({ f:'done' }, T)) + (m.done ? ' checked' : '') + '></td>' +
+    '<td class="acts"><button class="ib del" data-action="ms-del" data-i="' + m.id + '">✕</button></td></tr>';
+}
+
+/* ---------- the chart ---------- */
+function ganttCols(){
+  const r = programmeRange();
+  const start = mondayOf(r.start);
+  let end = r.end;
+  const total = Math.max(7, daysBetween(start, end) + 1);
+  const pad = ui.ganttZoom === 'month' ? 14 : 7;
+  end = addDays(start, total + pad - 1);
+  const days = daysBetween(start, end) + 1;
+  const px = ui.ganttZoom === 'day' ? 26 : ui.ganttZoom === 'week' ? 11 : 4.2;
+  return { start, end, days, px, width: Math.round(days * px) };
+}
+function ganttHTML(){
+  if(!project.activities.length && !project.milestones.length) return '<div class="empty">Add an activity to see the programme.</div>';
+  const C = ganttCols();
+  const today = todayISO();
+  /* top header: months, then day or week ticks */
+  let months = '', ticks = '';
+  let i = 0;
+  while(i < C.days){
+    const d = dParse(addDays(C.start, i));
+    const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    const span = Math.min(C.days - i, daysInMonth - d.getDate() + 1);
+    months += '<th class="mo" colspan="' + span + '">' + MONTHS[d.getMonth()] + ' ' + d.getFullYear() + '</th>';
+    i += span;
+  }
+  const step = ui.ganttZoom === 'day' ? 1 : 7;
+  for(let k = 0; k < C.days; k += step){
+    const iso = addDays(C.start, k);
+    const span = Math.min(step, C.days - k);
+    ticks += '<th colspan="' + span + '">' + (ui.ganttZoom === 'month' ? fmtDM(iso).split(' ')[0] : fmtDM(iso)) + '</th>';
+  }
+  const cells = n => { let h = ''; for(let k = 0; k < n; k++){ const dd = dParse(addDays(C.start, k)).getDay(); h += '<td class="cell ' + (dd === 0 || dd === 6 ? 'we' : '') + '"></td>'; } return h; };
+  const todayOff = daysBetween(C.start, today);
+  const todayLine = (todayOff >= 0 && todayOff < C.days) ? '<div class="today" style="left:' + (todayOff * C.px + C.px / 2) + 'px"></div>' : '';
+
+  const rows = project.activities.map(a => {
+    let bar = '';
+    if(a.start && a.end){
+      const off = daysBetween(C.start, a.start), len = Math.max(1, daysBetween(a.start, a.end) + 1);
+      const pct = clampPct(a.pct);
+      const behind = pct < activityPlannedPct(a) - 5;
+      const cls = pct >= 100 ? 'done' : behind ? 'late' : '';
+      const w = Math.max(10, len * C.px);
+      bar = '<div class="gbar ' + cls + '" style="left:' + (off * C.px) + 'px;width:' + w + 'px" title="' + esc(a.name) + ' — ' + fmtDMY(a.start) + ' to ' + fmtDMY(a.end) + ', ' + fmt(pct, 0) + '% done">' +
+        '<i style="width:' + pct + '%"></i>' + (w >= 34 ? '<span>' + fmt(pct, 0) + '%</span>' : '') + '</div>';
+    }
+    return '<tr><th class="nm">' + esc(a.name || 'Activity') + '</th><td class="cell" colspan="' + C.days + '" style="position:relative;padding:0">' +
+      '<div style="position:relative;height:30px;width:' + C.width + 'px">' + gridStripes(C) + bar + '</div></td></tr>';
+  }).join('');
+
+  const msRows = project.milestones.filter(m => m.date).map(m => {
+    const off = daysBetween(C.start, m.date);
+    const dot = (off >= 0 && off < C.days) ? '<div class="ms ' + (m.done ? 'done' : '') + '" style="left:' + (off * C.px + C.px / 2 - 7) + 'px" title="' + esc(m.name) + ' — ' + fmtDMY(m.date) + '"></div>' : '';
+    return '<tr class="msrow"><th class="nm">◆ ' + esc(m.name || 'Milestone') + '</th><td colspan="' + C.days + '" style="position:relative;padding:0">' +
+      '<div style="position:relative;height:30px;width:' + C.width + 'px">' + gridStripes(C) + dot + '</div></td></tr>';
+  }).join('');
+
+  return '<div class="gantt"><div style="position:relative">' + todayLineWrap(todayLine) +
+    '<table style="width:' + (C.width + 230) + 'px"><thead><tr><th class="nm">Activity</th>' + months + '</tr><tr><th class="nm"></th>' + ticks + '</tr></thead>' +
+    '<tbody>' + rows + msRows + '</tbody></table></div></div>';
+}
+function gridStripes(C){
+  let h = '';
+  for(let k = 0; k < C.days; k++){
+    const dd = dParse(addDays(C.start, k)).getDay();
+    if(dd === 0 || dd === 6) h += '<span style="position:absolute;top:0;bottom:0;left:' + (k * C.px) + 'px;width:' + C.px + 'px;background:#f2f4f9"></span>';
+  }
+  return h;
+}
+function todayLineWrap(line){ return line ? '<div style="position:absolute;left:230px;top:0;bottom:0;pointer-events:none;z-index:5">' + line + '</div>' : ''; }
+
+/* =====================================================================
+   Printable project report
+   ===================================================================== */
+function reportHTML(){
+  const pr = progress(), pt = paymentTotals(), pc = procurementTotals(), st = subsTotals(), mg = projectMargin(), cw = cashVsWork();
+  const d = new Date();
+  const head = '<div class="rhead"><div><h1>' + esc(projectLabel(project)) + '</h1><div>' + esc(project.client || '') + (project.location ? ' — ' + esc(project.location) : '') + '</div></div>' +
+    '<div class="meta"><img src="' + ASSETS.logo + '" alt=""><div>' + esc(settings.company) + '</div><div>Report date: ' + fmtDMY(todayISO()) + '</div>' +
+    (project.ref ? '<div>Ref: ' + esc(project.ref) + '</div>' : '') + '</div></div>';
+
+  const kv = '<div class="kv">' +
+    '<div><div class="k">PROGRESS</div><div class="v">' + fmt(pr.actual, 1) + '%</div><div class="k">plan ' + fmt(pr.planned, 1) + '%</div></div>' +
+    '<div><div class="k">RECEIVED</div><div class="v">' + fmt0(pt.received) + '</div><div class="k">of ' + fmt0(project.contractValue) + '</div></div>' +
+    '<div><div class="k">DUE TO SUBBIES</div><div class="v">' + fmt0(st.balance) + '</div><div class="k">retention ' + fmt0(st.retention) + '</div></div>' +
+    '<div><div class="k">MATERIALS</div><div class="v">' + fmt(pc.pct, 0) + '%</div><div class="k">delivered by value</div></div></div>';
+
+  const terms = project.terms.map(t => '<tr><td>' + esc(t.label) + '</td><td class="r">' + fmt(termAmount(t)) + '</td><td class="r">' + fmt(num(t.invoiced)) + '</td><td class="r">' + fmt(num(t.received)) + '</td><td>' + termStateLabel(termState(t)) + '</td></tr>').join('');
+  const subs = project.subs.map(s => { const a = subAccount(s); return '<tr><td>' + esc(s.name) + '</td><td>' + esc(s.trade) + '</td><td class="r">' + fmt(a.revised) + '</td><td class="r">' + fmt(a.gross) + '</td><td class="r">' + fmt(a.retention) + '</td><td class="r">' + fmt(a.paid) + '</td><td class="r">' + fmt(a.balance) + '</td></tr>'; }).join('');
+  const outstanding = project.materials.filter(m => matState(m) !== 'delivered')
+    .sort((a, b) => String(a.needBy || '9999').localeCompare(String(b.needBy || '9999')));
+  const mats = outstanding.slice(0, 26).map(m => '<tr><td>' + esc(m.code) + '</td><td>' + esc(m.desc) + '</td><td class="r">' + fmt(matOutstanding(m), 2) + ' ' + esc(m.unit) + '</td><td>' + esc(m.supplier) + '</td><td>' + (m.needBy ? fmtDMY(m.needBy) : '—') + '</td><td>' + matStateLabel(matState(m)) + '</td></tr>').join('');
+  const acts = project.activities.map(a => '<tr><td>' + esc(a.name) + '</td><td>' + fmtDMY(a.start) + '</td><td>' + fmtDMY(a.end) + '</td><td class="r">' + fmt(clampPct(a.pct), 0) + '%</td><td class="r">' + fmt(activityPlannedPct(a), 0) + '%</td></tr>').join('');
+
+  const p1 = '<section class="rpage">' + head + kv +
+    '<h2>Position</h2><table><tbody>' +
+    '<tr><td>Contract value' + (project.vatIncluded ? ' (incl. VAT)' : '') + '</td><td class="r">' + fmt(project.contractValue) + '</td></tr>' +
+    '<tr><td>Invoiced to date</td><td class="r">' + fmt(pt.invoiced) + '</td></tr>' +
+    '<tr><td>Received to date</td><td class="r">' + fmt(pt.received) + '</td></tr>' +
+    '<tr><td>Invoiced and still outstanding</td><td class="r">' + fmt(pt.outstanding) + '</td></tr>' +
+    '<tr><td>Value of work built but not yet received</td><td class="r">' + fmt(Math.max(0, cw.gap)) + '</td></tr>' +
+    '</tbody></table>' +
+    '<h2>Payment terms</h2><table><thead><tr><th>Stage</th><th class="r">Due</th><th class="r">Invoiced</th><th class="r">Received</th><th>Status</th></tr></thead><tbody>' +
+    (terms || '<tr><td colspan="5">No payment terms recorded.</td></tr>') + '</tbody>' +
+    '<tfoot><tr><td>Totals</td><td class="r">' + fmt(pt.due) + '</td><td class="r">' + fmt(pt.invoiced) + '</td><td class="r">' + fmt(pt.received) + '</td><td></td></tr></tfoot></table>' +
+    '<h2>Commercial summary</h2><table><tbody>' +
+    '<tr><td>Contract value' + (project.vatIncluded ? ' excluding VAT' : '') + '</td><td class="r">' + fmt(mg.ex) + '</td></tr>' +
+    '<tr><td>Subcontract commitments</td><td class="r">' + fmt(mg.subs) + '</td></tr>' +
+    '<tr><td>Materials at buy price' + (mg.uncosted ? ' (' + mg.uncosted + ' of ' + mg.total + ' lines not priced)' : '') + '</td><td class="r">' + fmt(mg.mats) + '</td></tr>' +
+    '</tbody><tfoot><tr><td>Balance for overheads and margin</td><td class="r">' + fmt(mg.margin) + ' (' + fmt(mg.pct, 1) + '%)</td></tr></tfoot></table>' +
+    '<p class="note">Labour carried directly, transport and site overheads are not included in the commercial summary.</p>' +
+    '<p class="note">Prepared by ' + esc(settings.preparedBy) + ' · ' + esc(d.toLocaleString('en-GB')) + '</p></section>';
+
+  const p2 = '<section class="rpage"><h2>Programme</h2>' +
+    '<table><thead><tr><th>Activity</th><th>Start</th><th>Finish</th><th class="r">Actual</th><th class="r">Planned</th></tr></thead><tbody>' +
+    (acts || '<tr><td colspan="5">No activities recorded.</td></tr>') + '</tbody>' +
+    '<tfoot><tr><td colspan="3">Overall</td><td class="r">' + fmt(pr.actual, 1) + '%</td><td class="r">' + fmt(pr.planned, 1) + '%</td></tr></tfoot></table>' +
+    '<h2>Subcontractor accounts</h2><table><thead><tr><th>Subcontractor</th><th>Trade</th><th class="r">Revised sum</th><th class="r">Certified</th><th class="r">Retention</th><th class="r">Paid</th><th class="r">Balance</th></tr></thead><tbody>' +
+    (subs || '<tr><td colspan="7">No subcontractors recorded.</td></tr>') + '</tbody>' +
+    '<tfoot><tr><td colspan="2">Totals</td><td class="r">' + fmt(st.revised) + '</td><td class="r">' + fmt(st.gross) + '</td><td class="r">' + fmt(st.retention) + '</td><td class="r">' + fmt(st.paid) + '</td><td class="r">' + fmt(st.balance) + '</td></tr></tfoot></table></section>';
+
+  const p3 = '<section class="rpage last"><h2>Outstanding materials</h2>' +
+    '<p class="note">' + outstanding.length + ' line' + (outstanding.length === 1 ? '' : 's') + ' not yet fully delivered, earliest need-by first.' + (outstanding.length > 26 ? ' First 26 shown.' : '') + '</p>' +
+    '<table><thead><tr><th>Code</th><th>Description</th><th class="r">Short</th><th>Supplier</th><th>Needed</th><th>Status</th></tr></thead><tbody>' +
+    (mats || '<tr><td colspan="6">Everything has been delivered.</td></tr>') + '</tbody></table>' +
+    (project.notes ? '<h2>Notes</h2><p>' + esc(project.notes).replace(/\n/g, '<br>') + '</p>' : '') + '</section>';
+
+  return p1 + p2 + p3;
+}
+function renderReport(){ $('#reportRoot').innerHTML = reportHTML(); }
+function enterReport(){
+  if(saveTimer) saveNow();
+  ui.report = true; document.body.classList.add('report');
+  $('#reportBar').innerHTML = '<button class="tb-btn" data-action="report-exit">← Back to the tracker</button><span style="font-weight:700">Project report</span>' +
+    '<span class="grow"></span><span style="font-size:12.5px;opacity:.85">Print on A4 · margins: None</span>' +
+    '<button class="tb-btn primary" data-action="print">Print / Save as PDF</button>';
+  renderReport(); window.scrollTo(0, 0);
+}
+function exitReport(){ ui.report = false; document.body.classList.remove('report'); $('#reportRoot').innerHTML = ''; render(); }
+
+/* =====================================================================
+   Supabase sync (shared projects) + the buying list across all projects
+   ===================================================================== */
+const cloud = { busy:false, projects:null, err:'' };
+const cloudOn = () => !!(settings.cloud && settings.cloud.enabled && settings.cloud.url && settings.cloud.key);
+function cloudBase(){
+  let u = String((settings.cloud && settings.cloud.url) || '').trim().replace(/\/+$/, '');
+  if(u && !/^https?:\/\//i.test(u)) u = 'https://' + u;
+  if(u && !/\./.test(u.replace(/^https?:\/\//i, ''))) u = 'https://' + u.replace(/^https?:\/\//i, '') + '.supabase.co';
+  return u;
+}
+function cloudHeaders(extra){
+  const k = String((settings.cloud && settings.cloud.key) || '').trim();
+  return Object.assign({ apikey:k, Authorization:'Bearer ' + k, 'Content-Type':'application/json' }, extra || {});
+}
+async function cloudReq(path, opts){
+  opts = opts || {};
+  const res = await fetch(cloudBase() + '/rest/v1/' + path, {
+    method: opts.method || 'GET', headers: cloudHeaders(opts.headers),
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  if(!res.ok){
+    let msg = res.status + ' ' + res.statusText;
+    try{ const j = await res.json(); if(j && (j.message || j.hint)) msg = j.message || j.hint; }catch(e){}
+    if(res.status === 401 || res.status === 403) msg = 'Supabase refused the request (' + res.status + '). Check the key and the table policies.';
+    if(res.status === 404) msg = 'Table not found — run the setup SQL in Supabase first.';
+    throw new Error(msg);
+  }
+  if(res.status === 204) return null;
+  const txt = await res.text();
+  return txt ? JSON.parse(txt) : null;
+}
+function cloudFail(e){
+  const m = (e && e.message) ? e.message : String(e);
+  cloud.err = m;
+  toast(/Failed to fetch|NetworkError|Load failed/i.test(m) ? 'No connection to Supabase — check the internet and the project URL' : m);
+}
+/* the listing never downloads the project bodies, only their names */
+async function cloudListProjects(){
+  if(!cloudOn()) return null;
+  cloud.err = '';
+  try{
+    cloud.projects = await cloudReq('pm_projects?select=id,name,client,status,updated_at&order=updated_at.desc&limit=200') || [];
+    return cloud.projects;
+  }catch(e){ cloudFail(e); cloud.projects = []; return null; }
+}
+async function cloudPushProject(p){
+  if(!cloudOn()){ toast('Turn on Supabase sync in Settings first'); return false; }
+  if(cloud.busy) return false;
+  cloud.busy = true;
+  try{
+    saveNow();
+    await cloudReq('pm_projects', { method:'POST', headers:{ Prefer:'resolution=merge-duplicates' },
+      body:[{ id:p.id, name:projectLabel(p), client:p.client || '', status:p.status || '', updated_at:new Date().toISOString(), data:p }] });
+    toast('“' + projectLabel(p) + '” saved to the cloud');
+    if(cloud.projects) await cloudListProjects();
+    return true;
+  }catch(e){ cloudFail(e); return false; }
+  finally{ cloud.busy = false; }
+}
+async function cloudOpenProject(id){
+  if(!cloudOn()) return false;
+  cloud.busy = true;
+  try{
+    const rows = await cloudReq('pm_projects?select=data&id=eq.' + encodeURIComponent(id) + '&limit=1');
+    const raw = rows && rows[0] && rows[0].data;
+    if(!raw){ toast('That project is no longer in the cloud'); return false; }
+    const local = lsGet(LS.proj(id), null);
+    if(local && (local.updated || 0) > (raw.updated || 0)){
+      if(!confirm('Your copy of “' + projectLabel(local) + '” on this computer is newer than the cloud copy.\n\nOpen the cloud copy anyway and replace the local one?')) return false;
+    }
+    if(project) saveNow();
+    project = normalizeProject(raw); histInit(); saveNow();
+    ui.modal = null; ui.tab = 'dashboard'; ui.subSel = project.subs.length ? project.subs[0].id : ''; render();
+    toast('Opened “' + projectLabel(project) + '” from the cloud');
+    return true;
+  }catch(e){ cloudFail(e); return false; }
+  finally{ cloud.busy = false; }
+}
+async function cloudDeleteProject(id){
+  if(!cloudOn()) return false;
+  try{
+    await cloudReq('pm_projects?id=eq.' + encodeURIComponent(id), { method:'DELETE' });
+    await cloudListProjects(); renderModal(); toast('Removed from the cloud (your local copy is untouched)');
+    return true;
+  }catch(e){ cloudFail(e); return false; }
+}
+/* Pull every cloud project onto this computer, so the buying list can see
+   the whole company's jobs. This one does move real data, so it is a button. */
+async function cloudPullAll(){
+  if(!cloudOn()) return false;
+  cloud.busy = true;
+  try{
+    const rows = await cloudReq('pm_projects?select=id,data&limit=200') || [];
+    let added = 0, updated = 0;
+    rows.forEach(r => {
+      if(!r.data) return;
+      const inc = normalizeProject(r.data);
+      const local = lsGet(LS.proj(inc.id), null);
+      if(local && (local.updated || 0) >= (inc.updated || 0)) return;
+      lsSet(LS.proj(inc.id), inc);
+      const idx = readIndex().filter(e => e.id !== inc.id);
+      idx.unshift({ id:inc.id, name:projectLabel(inc), client:inc.client || '', status:inc.status, updated:inc.updated || Date.now() });
+      lsSet(LS.index, idx);
+      if(local) updated++; else added++;
+    });
+    if(project) { const fresh = lsGet(LS.proj(project.id), null); if(fresh && (fresh.updated || 0) > (project.updated || 0)) project = normalizeProject(fresh); }
+    toast(added + ' project' + (added === 1 ? '' : 's') + ' added, ' + updated + ' refreshed');
+    render();
+    return true;
+  }catch(e){ cloudFail(e); return false; }
+  finally{ cloud.busy = false; }
+}
+async function cloudTest(){
+  if(!cloudBase() || !String(settings.cloud.key || '').trim()){ toast('Enter the project URL and the publishable key first'); return; }
+  try{
+    await cloudReq('pm_projects?select=id&limit=1');
+    settings.cloud.enabled = true; saveSettings();
+    toast('Connected to Supabase — sync is on');
+  }catch(e){ cloudFail(e); }
+  renderModal();
+}
+const CLOUD_SQL = `-- Run once in Supabase → SQL Editor
+
+create table if not exists pm_projects (
+  id         uuid primary key,
+  name       text,
+  client     text,
+  status     text,
+  data       jsonb,
+  updated_at timestamptz default now()
+);
+create index if not exists pm_projects_updated on pm_projects (updated_at desc);
+
+alter table pm_projects enable row level security;
+
+drop policy if exists pm_projects_all on pm_projects;
+create policy pm_projects_all on pm_projects for all to anon using (true) with check (true);`;
+
+/* =====================================================================
+   Buying list — every project's outstanding materials in one schedule
+   ===================================================================== */
+const LIVE = { confirmed:1, running:1, snagging:1 };
+function allProjects(){
+  const out = [];
+  readIndex().forEach(e => {
+    if(project && e.id === project.id){ out.push(project); return; }
+    const raw = lsGet(LS.proj(e.id), null);
+    if(raw) out.push(normalizeProject(raw));
+  });
+  if(project && !out.some(p => p.id === project.id)) out.unshift(project);
+  return out;
+}
+function buyingList(){
+  const ps = allProjects().filter(p => ui.buyAll || LIVE[p.status]);
+  const map = {};
+  ps.forEach(p => p.materials.forEach(m => {
+    const short = matOutstanding(m);
+    if(short <= 0) return;                       /* already delivered */
+    const key = String(m.code || m.desc).trim().toLowerCase();
+    if(!key) return;
+    if(!map[key]) map[key] = { code:m.code || '', desc:m.desc || '', unit:m.unit || '', short:0, cost:0, needBy:'', suppliers:{}, lines:[], uncosted:0 };
+    const r = map[key];
+    r.short = r2(r.short + short);
+    r.cost = r2(r.cost + r2(short * num(m.cost)));
+    if(!num(m.cost)) r.uncosted++;
+    if(!r.desc && m.desc) r.desc = m.desc;
+    if(m.supplier) r.suppliers[m.supplier] = 1;
+    if(m.needBy && (!r.needBy || m.needBy < r.needBy)) r.needBy = m.needBy;
+    r.lines.push({ project:projectLabel(p), pid:p.id, short:short, needBy:m.needBy, state:matState(m), supplier:m.supplier });
+  }));
+  let rows = Object.keys(map).map(k => map[k]);
+  if(ui.buySupplier) rows = rows.filter(r => Object.keys(r.suppliers).indexOf(ui.buySupplier) >= 0);
+  const toks = ui.buyFilter.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if(toks.length) rows = rows.filter(r => { const h = (r.code + ' ' + r.desc + ' ' + Object.keys(r.suppliers).join(' ')).toLowerCase(); return toks.every(t => h.includes(t)); });
+  rows.sort((a, b) => String(a.needBy || '9999-99-99').localeCompare(String(b.needBy || '9999-99-99')) || String(a.code).localeCompare(String(b.code)));
+  return { rows, projects:ps.length };
+}
+function buyingSuppliers(){
+  const s = {};
+  allProjects().filter(p => ui.buyAll || LIVE[p.status]).forEach(p => p.materials.forEach(m => { if(m.supplier && matOutstanding(m) > 0) s[m.supplier] = 1; }));
+  return Object.keys(s).sort();
+}
+function tabBuying(){
+  const B = buyingList();
+  const total = r2(B.rows.reduce((s, r) => s + r.cost, 0));
+  const overdue = B.rows.filter(r => r.needBy && r.needBy < todayISO()).length;
+  const soon = B.rows.filter(r => r.needBy && r.needBy >= todayISO() && daysBetween(todayISO(), r.needBy) <= 7).length;
+  const sup = buyingSuppliers();
+  const rows = B.rows.length ? B.rows.map(r => buyRow(r)).join('')
+    : '<tr><td colspan="8" class="empty">Nothing outstanding across ' + B.projects + ' project' + (B.projects === 1 ? '' : 's') + '.</td></tr>';
+  return '<div class="wrap">' +
+    '<div class="stats">' +
+      stat('Projects included', String(B.projects), ui.buyAll ? 'every project on this computer' : 'confirmed, on site and snagging') +
+      stat('Codes to buy', String(B.rows.length), 'distinct items still short') +
+      stat('Value to buy', CUR() + ' ' + fmt0(total), 'at the buy prices entered') +
+      stat('Needed within 7 days', String(soon + overdue), overdue ? overdue + ' already overdue' : 'nothing overdue', overdue ? 'bad' : soon ? 'warn' : 'good') +
+    '</div>' +
+    '<section class="card"><h2>Buying list — all projects</h2>' +
+      '<p class="sub">Every material still short, pooled by code across projects, earliest need-by first. Open a row to see which job each quantity is for.</p>' +
+      '<div class="toolbar"><input type="text" id="buyQ" autocomplete="off" placeholder="Filter by code, description or supplier…" value="' + esc(ui.buyFilter) + '">' +
+      SEL({ onchange:'buysupplier' }, [['','All suppliers']].concat(sup.map(s => [s, s])), ui.buySupplier) +
+      '<label class="fld chk" style="padding-top:0"><input type="checkbox" data-action="buy-all"' + (ui.buyAll ? ' checked' : '') + '><span>Include finished and on-hold projects</span></label>' +
+      '<button class="btn" data-action="buy-csv">Export CSV</button>' +
+      (cloudOn() ? '<button class="btn solid" data-action="cloud-pull">Pull the team’s projects</button>' : '') + '</div>' +
+      '<div class="tablewrap"><table class="t" style="min-width:980px"><colgroup><col style="width:30px"><col style="width:120px"><col><col style="width:60px"><col style="width:110px"><col style="width:120px"><col style="width:170px"><col style="width:130px"></colgroup>' +
+      '<thead><tr><th></th><th>Code</th><th>Description</th><th>Unit</th><th class="r">To buy</th><th class="r">Cost</th><th>Supplier</th><th>Needed by</th></tr></thead><tbody>' + rows + '</tbody>' +
+      '<tfoot><tr><td colspan="5" class="r">Total to buy</td><td class="r">' + fmt(total) + '</td><td colspan="2"></td></tr></tfoot></table></div>' +
+      '<p class="hint">Quantities are what is still short — required less delivered — so a part-delivered line only shows the balance.</p></section></div>';
+}
+function buyRow(r){
+  const key = (r.code || r.desc).toLowerCase();
+  const open = ui.buyOpen[key];
+  const late = r.needBy && r.needBy < todayISO();
+  const soon = r.needBy && !late && daysBetween(todayISO(), r.needBy) <= 7;
+  const sup = Object.keys(r.suppliers);
+  const main = '<tr class="' + (late ? 'late' : soon ? 'soon' : '') + '">' +
+    '<td class="idx"><button class="ib" data-action="buy-open" data-k="' + esc(key) + '" title="Show the projects">' + (open ? '\u2212' : '+') + '</button></td>' +
+    '<td><b>' + esc(r.code || '—') + '</b></td><td>' + esc(r.desc) + '</td><td>' + esc(r.unit) + '</td>' +
+    '<td class="r"><b>' + fmt(r.short, 2) + '</b></td>' +
+    '<td class="r">' + (r.uncosted ? '<span class="pill amber">' + r.uncosted + ' unpriced</span>' : fmt(r.cost)) + '</td>' +
+    '<td>' + esc(sup.join(', ') || '—') + '</td>' +
+    '<td>' + (r.needBy ? fmtDMY(r.needBy) : '—') + (late ? ' <span class="pill red">overdue</span>' : '') + '</td></tr>';
+  if(!open) return main;
+  const sub = r.lines.slice().sort((a, b) => String(a.needBy || '9999').localeCompare(String(b.needBy || '9999')))
+    .map(l => '<tr><td></td><td colspan="3" style="padding-left:14px;color:var(--ink-2)">' + esc(l.project) + '</td>' +
+      '<td class="r">' + fmt(l.short, 2) + '</td><td class="r"><span class="pill ' + pillFor(l.state) + '">' + matStateLabel(l.state) + '</span></td>' +
+      '<td>' + esc(l.supplier || '—') + '</td><td>' + (l.needBy ? fmtDMY(l.needBy) : '—') + '</td></tr>').join('');
+  return main + sub;
+}
+function buyingCsv(){
+  const q = v => /[",\n]/.test(String(v)) ? '"' + String(v).replace(/"/g, '""') + '"' : String(v);
+  const B = buyingList();
+  const lines = ['Code,Description,Unit,To buy,Cost,Supplier,Needed by,Projects'];
+  B.rows.forEach(r => lines.push([r.code, r.desc, r.unit, r.short, r.cost, Object.keys(r.suppliers).join(' / '), r.needBy,
+    r.lines.map(l => l.project + ' (' + l.short + ')').join(' | ')].map(q).join(',')));
+  return lines.join('\r\n');
+}
+
+/* =====================================================================
+   Events, actions, startup
+   ===================================================================== */
+function touch(structural){ histRecord(structural); queueSave(); refreshComputed(); renderTopbar(); }
+const findSub = id => project.subs.find(s => s.id === id);
+function subChild(list, subId, childId){ const s = findSub(subId); return s ? (s[list] || []).find(x => x.id === childId) : null; }
+
+function resolveTarget(d){
+  switch(d.s){
+    case 'proj': return project;
+    case 'mat':  return project.materials.find(x => x.id === d.i);
+    case 'act':  return project.activities.find(x => x.id === d.i);
+    case 'ms':   return project.milestones.find(x => x.id === d.i);
+    case 'term': return project.terms.find(x => x.id === d.i);
+    case 'sub':  return findSub(d.i);
+    case 'var':  return subChild('variations', d.i, d.j);
+    case 'cert': return subChild('certs', d.i, d.j);
+    case 'pay':  return subChild('payments', d.i, d.j);
+    case 'iss':  return subChild('issues', d.i, d.j);
+  }
+  return null;
+}
+function applyField(el){
+  const d = el.dataset;
+  if(!d.s) return;
+  if(d.s === 'modal'){ if(ui.modal) ui.modal[d.f] = (el.type === 'checkbox') ? el.checked : (d.num ? num(el.value) : el.value); return; }
+  let v;
+  if(el.type === 'checkbox') v = el.checked;
+  else if(d.num) v = num(el.value);
+  else v = el.value;
+  if(d.s === 'set'){ setPath(settings, d.f, v); saveSettings(); return; }
+  const t = resolveTarget(d);
+  if(!t) return;
+  /* a blank "fixed amount" on a payment stage means: work it out from the % */
+  if(d.s === 'term' && d.f === 'amount'){ t.amount = String(el.value).trim() === '' ? null : num(el.value); touch(); return; }
+  if(d.f === 'pct') v = clampPct(v);
+  t[d.f] = v;
+  touch(el.tagName === 'SELECT' || el.type === 'checkbox');
+}
+function moveIn(arr, id, dir){
+  const i = arr.findIndex(x => x.id === id), j = i + dir;
+  if(i < 0 || j < 0 || j >= arr.length) return;
+  const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+}
+
+/* ---------- import / export ---------- */
+function importQuote(){
+  pickFile('.json,application/json', text => {
+    let o;
+    try{ o = JSON.parse(text); }catch(e){ toast('That file is not readable JSON'); return; }
+    if(looksLikeQuoteStudio(o)){
+      const p = projectFromQuoteStudio(o);
+      if(project && project.materials.length === 0 && project.subs.length === 0 && !project.name && confirmReplaceBlank()){ /* fall through */ }
+      if(project) saveNow();
+      project = p; histInit(); saveNow();
+      ui.tab = 'procure'; ui.modal = null; render();
+      toast('Imported ' + p.materials.length + ' material lines from the quote');
+      return;
+    }
+    if(o && Array.isArray(o.materials) && o.terms){ openTrackerFile(o); return; }
+    toast('That is neither a Quote Studio quote nor a tracker file');
+  });
+}
+const confirmReplaceBlank = () => true;
+function openTrackerFile(o){
+  const p = normalizeProject(o);
+  if(readIndex().some(e => e.id === p.id)) p.id = uuid();
+  if(project) saveNow();
+  project = p; histInit(); saveNow(); ui.modal = null; render();
+  toast('Opened “' + projectLabel(p) + '”');
+}
+function importTracker(){
+  pickFile('.json,application/json', text => {
+    let o;
+    try{ o = JSON.parse(text); }catch(e){ toast('That file is not readable JSON'); return; }
+    if(o && Array.isArray(o.materials)) openTrackerFile(o);
+    else if(looksLikeQuoteStudio(o)) toast('That is a quote — use “Import a confirmed quote” instead');
+    else toast('That file is not a tracker project');
+  });
+}
+/* pull materials from a quote into the project that is already open */
+function importMaterialsInto(){
+  pickFile('.json,application/json', text => {
+    let o;
+    try{ o = JSON.parse(text); }catch(e){ toast('That file is not readable JSON'); return; }
+    if(!looksLikeQuoteStudio(o)){ toast('That is not a Quote Studio quote'); return; }
+    const src = projectFromQuoteStudio(o);
+    let added = 0, merged = 0;
+    src.materials.forEach(m => {
+      const key = (m.code || m.desc).toLowerCase();
+      const ex = project.materials.find(x => (x.code || x.desc).toLowerCase() === key);
+      if(ex){ ex.qtyReq = r2(num(ex.qtyReq) + num(m.qtyReq)); merged++; }
+      else { project.materials.push(m); added++; }
+    });
+    if(!num(project.contractValue) && src.contractValue) project.contractValue = src.contractValue;
+    touch(true); render();
+    toast(added + ' lines added' + (merged ? ', ' + merged + ' quantities topped up' : ''));
+  });
+}
+function exportProject(){
+  saveNow();
+  downloadBlob(new Blob([JSON.stringify(project, null, 2)], { type:'application/json' }), safeName(projectLabel(project)) + '_tracker.json');
+}
+function materialsCsv(){
+  const q = v => /[",\n]/.test(String(v)) ? '"' + String(v).replace(/"/g, '""') + '"' : String(v);
+  const lines = ['Code,Description,Unit,Required,Ordered,Delivered,Short,Quoted rate,Quoted value,Buy price,Cost,Supplier,Needed on site,Status'];
+  project.materials.forEach(m => lines.push([m.code, m.desc, m.unit, num(m.qtyReq), num(m.qtyOrdered), num(m.qtyDelivered), matOutstanding(m), num(m.rate), matValue(m), num(m.cost), matCost(m), m.supplier, m.needBy, matStateLabel(matState(m))].map(q).join(',')));
+  return lines.join('\r\n');
+}
+
+/* ---------- projects ---------- */
+function startProject(p){
+  if(project) saveNow();
+  project = p; histInit(); saveNow();
+  ui.modal = null; ui.tab = 'dashboard'; ui.subSel = '';
+  render();
+}
+
+/* ---------- actions ---------- */
+function act(a, el, ev){
+  const d = el.dataset;
+  switch(a){
+    case 'tab': ui.tab = d.tab; render(); window.scrollTo(0, 0); break;
+    case 'undo': undo(); break;
+    case 'redo': redo(); break;
+    case 'settings': ui.modal = { type:'settings' }; ui.showSql = false; renderModal(); break;
+    case 'projects': ui.modal = { type:'projects' }; renderModal(); if(cloudOn()) cloudListProjects().then(() => { if(ui.modal && ui.modal.type === 'projects') renderModal(); }); break;
+    case 'modal-close': { const t = ui.modal && ui.modal.type; ui.modal = null; if(t === 'settings') render(); else renderModal(); break; }
+    case 'modal-bg': if(ev.target === el){ const t = ui.modal && ui.modal.type; ui.modal = null; if(t === 'settings') render(); else renderModal(); } break;
+    case 'report': enterReport(); break;
+    case 'report-exit': exitReport(); break;
+    case 'print': renderReport(); window.print(); break;
+    case 'export-json': exportProject(); break;
+    case 'import-json': importTracker(); break;
+    case 'import-quote': importQuote(); break;
+    case 'new-project': ui.modal = { type:'newproj', name:'', client:'', location:'', contractValue:0, startDate:todayISO(), seed:true }; renderModal(); break;
+    case 'newproj-ok': {
+      const m = ui.modal;
+      const p = blankProject(String(m.name || '').trim());
+      p.client = m.client || ''; p.location = m.location || ''; p.contractValue = num(m.contractValue);
+      p.startDate = m.startDate || todayISO();
+      if(m.seed){ seedProgramme(p); seedTerms(p); } else p.endDate = addDays(p.startDate, 45);
+      startProject(p); toast('Project created'); break;
+    }
+    case 'proj-open': if(loadProjectById(d.id)){ ui.modal = null; ui.tab = 'dashboard'; ui.subSel = ''; render(); } break;
+    case 'proj-del': {
+      if(!confirm('Delete this project from this computer? Export it first if you may need it again.')) break;
+      const wasCurrent = d.id === project.id;
+      deleteProjectById(d.id);
+      if(wasCurrent){
+        clearTimeout(saveTimer); saveTimer = null; project = null;
+        const next = readIndex()[0];
+        if(next && loadProjectById(next.id)){ ui.tab = 'dashboard'; }
+        else { project = blankProject('New project'); seedProgramme(project); seedTerms(project); histInit(); saveNow(); }
+        ui.subSel = ''; render();
+      } else renderModal();
+      break;
+    }
+
+    /* cloud */
+    case 'cloud-test': cloudTest(); break;
+    case 'cloud-sql': ui.showSql = !ui.showSql; renderModal(); break;
+    case 'cloud-list': cloudListProjects().then(renderModal); break;
+    case 'cloud-push': cloudPushProject(project).then(renderModal); break;
+    case 'cloud-open': cloudOpenProject(d.id); break;
+    case 'cloud-pull': cloudPullAll(); break;
+    case 'cloud-del': if(confirm('Remove this project from the shared cloud list? Local copies stay.')) cloudDeleteProject(d.id); break;
+
+    /* buying list */
+    case 'buy-open': { const k = d.k; ui.buyOpen[k] = !ui.buyOpen[k]; render(); break; }
+    case 'buy-all': ui.buyAll = !ui.buyAll; render(); break;
+    case 'buy-csv': downloadBlob(new Blob([buyingCsv()], { type:'text/csv' }), 'buying_list_' + todayISO() + '.csv'); break;
+
+    /* materials */
+    case 'mat-add': { const m = newMaterial(); project.materials.push(m); touch(true); ui.focus = { sel:'[data-i="' + m.id + '"][data-f="code"]' }; render(); break; }
+    case 'mat-del': { project.materials = project.materials.filter(x => x.id !== d.i); touch(true); render(); break; }
+    case 'mat-done': { const m = project.materials.find(x => x.id === d.i); if(m){ m.qtyOrdered = num(m.qtyReq); m.qtyDelivered = num(m.qtyReq); touch(true); render(); } break; }
+    case 'mat-import': importMaterialsInto(); break;
+    case 'mat-csv': downloadBlob(new Blob([materialsCsv()], { type:'text/csv' }), safeName(projectLabel(project)) + '_materials.csv'); break;
+
+    /* programme */
+    case 'zoom': ui.ganttZoom = d.z; render(); break;
+    case 'act-add': {
+      const last = project.activities[project.activities.length - 1];
+      const s = last ? addDays(last.end, 1) : project.startDate;
+      const x = newActivity({ start:s, end:addDays(s, 4) });
+      project.activities.push(x); touch(true); ui.focus = { sel:'[data-i="' + x.id + '"][data-f="name"]' }; render(); break;
+    }
+    case 'act-del': project.activities = project.activities.filter(x => x.id !== d.i); touch(true); render(); break;
+    case 'act-move': moveIn(project.activities, d.i, parseInt(d.dir, 10)); touch(true); render(); break;
+    case 'act-done': { const x = project.activities.find(y => y.id === d.i); if(x){ x.pct = 100; touch(true); render(); } break; }
+    case 'act-std': {
+      if(project.activities.length && !confirm('Replace the current activities with the standard roofing programme?')) break;
+      seedProgramme(project); touch(true); render(); toast('Standard programme loaded'); break;
+    }
+    case 'act-reflow': {
+      if(!project.activities.length) break;
+      if(!confirm('Re-date every activity back to back, starting from ' + fmtDMY(project.startDate) + '? Durations are kept.')) break;
+      let cur = project.startDate;
+      project.activities.forEach(x => {
+        const len = Math.max(1, (x.start && x.end) ? daysBetween(x.start, x.end) + 1 : 5);
+        x.start = cur; x.end = addDays(cur, len - 1); cur = addDays(x.end, 1);
+      });
+      project.endDate = project.activities[project.activities.length - 1].end;
+      touch(true); render(); toast('Dates re-flowed'); break;
+    }
+    case 'ms-add': { const m = newMilestone({ date:project.endDate }); project.milestones.push(m); touch(true); ui.focus = { sel:'[data-i="' + m.id + '"][data-f="name"]' }; render(); break; }
+    case 'ms-del': project.milestones = project.milestones.filter(x => x.id !== d.i); touch(true); render(); break;
+
+    /* payment terms */
+    case 'term-add': { const t = newTerm(); project.terms.push(t); touch(true); ui.focus = { sel:'[data-i="' + t.id + '"][data-f="label"]' }; render(); break; }
+    case 'term-del': project.terms = project.terms.filter(x => x.id !== d.i); touch(true); render(); break;
+    case 'term-move': moveIn(project.terms, d.i, parseInt(d.dir, 10)); touch(true); render(); break;
+    case 'term-std': {
+      if(project.terms.length && !confirm('Replace the payment stages with 50% advance / 30% on delivery / 20% on completion?')) break;
+      seedTerms(project); touch(true); render(); break;
+    }
+
+    /* subcontractors */
+    case 'sub-add': { const s = newSub({ name:'' }); project.subs.push(s); ui.subSel = s.id; touch(true); ui.focus = { sel:'[data-i="' + s.id + '"][data-f="name"]', select:true }; render(); break; }
+    case 'sub-pick': ui.subSel = d.i; render(); break;
+    case 'sub-del': {
+      const s = findSub(d.i); if(!s) break;
+      if(!confirm('Remove ' + (s.name || 'this subcontractor') + ' and their whole account?')) break;
+      project.subs = project.subs.filter(x => x.id !== d.i);
+      ui.subSel = project.subs.length ? project.subs[0].id : '';
+      touch(true); render(); break;
+    }
+    case 'var-add': { const s = findSub(d.i); if(s){ const v = newVariation(); s.variations.push(v); touch(true); ui.focus = { sel:'[data-j="' + v.id + '"][data-f="desc"]' }; render(); } break; }
+    case 'var-del': { const s = findSub(d.i); if(s){ s.variations = s.variations.filter(x => x.id !== d.j); touch(true); render(); } break; }
+    case 'cert-add': {
+      const s = findSub(d.i); if(!s) break;
+      const prev = s.certs.reduce((m, c) => Math.max(m, num(c.grossToDate)), 0);
+      const c = newCert({ no:String(s.certs.length + 1), grossToDate:prev });
+      s.certs.push(c); touch(true); ui.focus = { sel:'[data-j="' + c.id + '"][data-f="grossToDate"]', select:true }; render(); break;
+    }
+    case 'cert-del': { const s = findSub(d.i); if(s){ s.certs = s.certs.filter(x => x.id !== d.j); touch(true); render(); } break; }
+    case 'pay-add': {
+      const s = findSub(d.i); if(!s) break;
+      const bal = subAccount(s).balance;
+      const p = newPayment({ amount: bal > 0 ? bal : 0 });
+      s.payments.push(p); touch(true); ui.focus = { sel:'[data-j="' + p.id + '"][data-f="amount"]', select:true }; render(); break;
+    }
+    case 'pay-del': { const s = findSub(d.i); if(s){ s.payments = s.payments.filter(x => x.id !== d.j); touch(true); render(); } break; }
+    case 'iss-add': { const s = findSub(d.i); if(s){ const x = newIssue(); s.issues.push(x); touch(true); ui.focus = { sel:'[data-j="' + x.id + '"][data-f="desc"]' }; render(); } break; }
+    case 'iss-del': { const s = findSub(d.i); if(s){ s.issues = s.issues.filter(x => x.id !== d.j); touch(true); render(); } break; }
+  }
+}
+
+/* ---------- listeners ---------- */
+document.addEventListener('click', e => { const el = e.target.closest('[data-action]'); if(el) act(el.dataset.action, el, e); });
+document.addEventListener('input', e => {
+  const t = e.target;
+  if(t.id === 'matQ'){ ui.matFilter = t.value; render(); const f = $('#matQ'); if(f){ f.focus(); f.setSelectionRange(f.value.length, f.value.length); } return; }
+  if(t.id === 'buyQ'){ ui.buyFilter = t.value; render(); const f = $('#buyQ'); if(f){ f.focus(); f.setSelectionRange(f.value.length, f.value.length); } return; }
+  if(t.classList && t.classList.contains('autosize')) autosize(t);
+  if(t.dataset && t.dataset.s && ((t.tagName === 'INPUT' && t.type !== 'checkbox') || t.tagName === 'TEXTAREA')) applyField(t);
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if(t.dataset && t.dataset.onchange === 'matstatus'){ ui.matStatus = t.value; render(); return; }
+  if(t.dataset && t.dataset.onchange === 'buysupplier'){ ui.buySupplier = t.value; render(); return; }
+  if(!t.dataset || !t.dataset.s) return;
+  if(t.tagName === 'SELECT' || (t.tagName === 'INPUT' && (t.type === 'checkbox' || t.type === 'date'))){
+    applyField(t);
+    if(t.dataset.rr || t.type === 'date' || t.dataset.s === 'act' || t.dataset.s === 'ms') render();
+  }
+});
+document.addEventListener('focusout', e => {
+  const t = e.target;
+  if(!t || !t.dataset || !t.dataset.s) return;
+  if(['mat','act','term','sub','cert','pay','iss','var'].indexOf(t.dataset.s) < 0 || t.tagName === 'SELECT') return;
+  /* If focus is on its way to a button, let that button's own action redraw.
+     Re-rendering here would remove the button before the click lands on it. */
+  const to = e.relatedTarget;
+  if(to && to.closest && to.closest('[data-action]')) return;
+  /* otherwise redraw so pills, bars and the look-ahead settle once a figure is finished */
+  render();
+});
+document.addEventListener('keydown', e => {
+  const t = e.target;
+  if(t && t.classList && t.classList.contains('autosize') && e.key === 'Enter'){ e.preventDefault(); return; }
+  if(e.key === 'Escape'){
+    if(ui.modal){ ui.modal = null; renderModal(); return; }
+    if(ui.report){ exitReport(); return; }
+  }
+  const typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
+  if((e.ctrlKey || e.metaKey) && !typing){
+    const k = e.key.toLowerCase();
+    if(k === 'z' && !e.shiftKey){ e.preventDefault(); undo(); }
+    else if(k === 'y' || (k === 'z' && e.shiftKey)){ e.preventDefault(); redo(); }
+  }
+});
+window.addEventListener('beforeprint', () => { if(!ui.report) renderReport(); });
+window.addEventListener('afterprint', () => { if(!ui.report){ const r = $('#reportRoot'); if(r) r.innerHTML = ''; } });
+window.addEventListener('beforeunload', () => { if(saveTimer) saveNow(); });
+window.addEventListener('resize', () => { if(!ui.report) autosizeAll(); });
+
+/* ---------- demo project, so the tool is not empty on first open ---------- */
+function sampleProject(){
+  const p = blankProject('RATADO HOMES-SIAYA');
+  p.client = 'DR. JAMES AMENGE'; p.location = 'SIAYA COUNTY'; p.ref = 'RAT0002';
+  p.status = 'running'; p.contractValue = 1746266.32; p.vatIncluded = true; p.roofArea = 293.6;
+  p.notes = 'Supply of Asili roofing tiles and fabrication and installation of Frametech light gauge steel.';
+  p.startDate = addDays(todayISO(), -21);
+  const mats = [
+    ['ASST021','Asili Coffee Brown Classic - Compact Tile','pcs',740,500,-14],
+    ['ATU140D','Touch-Up -Coffee Brown','pcs',8,1250,-7],
+    ['FTS042','Roofing screws Box L 40mm* 5.5','pcs',4440,10,-14],
+    ['ARL140D','Ridge Hip cap -coffee brown','pcs',62,878,2],
+    ['ACV140D','Coated Valley Coffee Brown','pcs',26,1024,2],
+    ['ABL140D','Barge Box Cover-Coffee Brown','pcs',4,878,9],
+    ['ASF140D','Sideflashing Coffee Brown','pcs',8,878,9],
+    ['FTS-01','LGS Roof Steel Works','kg',1902,230,-18],
+    ['FTS-MC001','Main Connectors','pcs',52,300,-18],
+    ['FTS-B001','Galvalum Steel Battens-','pcs',169,582,4]
+  ];
+  mats.forEach((m, i) => {
+    const mat = newMaterial({ code:m[0], desc:m[1], unit:m[2], qtyReq:m[3], rate:m[4], cost:r2(m[4] * 0.62), needBy:addDays(todayISO(), m[5]), supplier: i < 7 ? 'Space & Style — Asili' : 'Frametech' });
+    if(m[5] < -10){ mat.qtyOrdered = mat.qtyReq; mat.qtyDelivered = mat.qtyReq; }
+    else if(m[5] < 0){ mat.qtyOrdered = mat.qtyReq; }
+    p.materials.push(mat);
+  });
+  seedProgramme(p); seedTerms(p);
+  p.activities.forEach((a, i) => { a.pct = i < 3 ? 100 : i === 3 ? 65 : i === 4 ? 20 : 0; });
+  p.milestones[0].done = true;
+  p.terms[0].invoiced = r2(p.contractValue * 0.5); p.terms[0].received = r2(p.contractValue * 0.5);
+  p.terms[0].invoiceNo = 'INV-1042'; p.terms[0].receivedDate = addDays(todayISO(), -24);
+  p.terms[1].invoiced = r2(p.contractValue * 0.3); p.terms[1].invoiceNo = 'INV-1088';
+  const s1 = newSub({ name:'Otieno Roofing Crew', trade:'LGS erection', contact:'0722 000 111', contractSum:320000, retentionPct:10 });
+  s1.variations.push(newVariation({ desc:'Extra dormer framing', amount:28000, date:addDays(todayISO(), -10) }));
+  s1.certs.push(newCert({ no:'1', date:addDays(todayISO(), -12), grossToDate:150000, note:'Trusswork to 50%' }));
+  s1.certs.push(newCert({ no:'2', date:addDays(todayISO(), -2), grossToDate:245000, note:'Trusswork complete, battens started' }));
+  s1.payments.push(newPayment({ date:addDays(todayISO(), -20), amount:80000, ref:'MPESA QJ4", mobilisation', kind:'advance' }));
+  s1.payments.push(newPayment({ date:addDays(todayISO(), -9), amount:55000, ref:'Cheque 004121' }));
+  s1.issues.push(newIssue({ date:addDays(todayISO(), -15), desc:'Screws and drive bits issued from store', value:12000 }));
+  const s2 = newSub({ name:'Wanjala Tilers', trade:'Tiling / roof covering', contact:'0733 222 333', contractSum:210000, retentionPct:10 });
+  s2.payments.push(newPayment({ date:addDays(todayISO(), -5), amount:40000, ref:'Mobilisation', kind:'advance' }));
+  p.subs.push(s1, s2);
+  return p;
+}
+
+/* ---------- startup ---------- */
+function init(){
+  $('#brandLogo').src = ASSETS.logo;
+  settings = Object.assign({}, DEFAULT_SETTINGS, lsGet(LS.settings, {}) || {});
+  settings.cloud = Object.assign({}, DEFAULT_SETTINGS.cloud, settings.cloud || {});
+  let ok = false;
+  const cur = lsGet(LS.cur, null);
+  if(cur) ok = loadProjectById(cur);
+  if(!ok){ for(const e of readIndex()){ if(loadProjectById(e.id)){ ok = true; break; } } }
+  if(!ok){
+    project = lsGet(LS.seeded, false) ? (function(){ const p = blankProject('New project'); seedProgramme(p); seedTerms(p); return p; })() : sampleProject();
+    lsSet(LS.seeded, true); histInit(); saveNow();
+  }
+  ui.subSel = project.subs.length ? project.subs[0].id : '';
+  render();
+}
+init();
+
+</script>
+</body>
+</html>
