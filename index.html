@@ -416,7 +416,9 @@ function seedTerms(p){ p.terms = STD_TERMS.map(t => newTerm({ label:t.label, pct
 
 /* ---------- import from Quote Studio ---------- */
 function qsLineNet(l){ return num(l.excl) * (1 - num(l.disc) / 100); }
-function qsQuoteSub(q){ return r2((q.lines || []).reduce((s, l) => s + r2(num(l.qty) * qsLineNet(l)), 0)); }
+/* A quote can price one typical unit and cover several of them. */
+const qsUnits = q => Math.max(1, Math.round(num(q && q.units) || 1));
+function qsQuoteSub(q){ return r2(r2((q.lines || []).reduce((s, l) => s + r2(num(l.qty) * qsLineNet(l)), 0)) * qsUnits(q)); }
 function qsGrandTotals(qp){
   const g = qp.grand || {};
   const items = g.items || [];
@@ -446,7 +448,7 @@ function projectFromQuoteStudio(qp){
   p.sourceQuote = { id:qp.id, sub:T.sub, vat:T.vat, total:T.total, at:Date.now() };
   const seen = {};
   (qp.quotes || []).forEach(q => (q.lines || []).forEach(l => {
-    const qty = num(l.qty);
+    const qty = r2(num(l.qty) * qsUnits(q));
     if(qty <= 0) return;
     const desc = String(l.desc || '').trim();
     if(!desc && !String(l.code || '').trim()) return;
