@@ -371,11 +371,15 @@ const MAT_STATES = [['to-order','To order'],['ordered','Ordered'],['part','Part 
 /* ---------- state ---------- */
 let settings = Object.assign({}, DEFAULT_SETTINGS);
 let project = null;
-const ui = { tab:'dashboard', modal:null, focus:null, ganttZoom:'week', matFilter:'', matStatus:'', subSel:'', report:false, showDone:true,
+const ui = { tab:'dashboard', modal:null, focus:null, ganttZoom:'week', matFilter:'', matStatus:'', subSel:'', report:false, showDone:true, unitsDel:'',
   buyFilter:'', buySupplier:'', buyAll:false, buyOpen:{}, showSql:false };
 
 /* ---------- factories ---------- */
-function newMaterial(o){ return Object.assign({ id:uid(), code:'', desc:'', unit:'pcs', qtyReq:0, qtyOrdered:0, qtyDelivered:0, rate:0, cost:0, supplier:'', needBy:'', lpo:'', notes:'' }, o || {}); }
+function newMaterial(o){ return Object.assign({ id:uid(), code:'', desc:'', unit:'pcs', qtyReq:0, qtyOrdered:0, qtyDelivered:0, perUnit:0, rate:0, cost:0, supplier:'', needBy:'', lpo:'', notes:'' }, o || {}); }
+/* perUnit is the quantity for ONE typical unit; 0 means the line is not scaled by units */
+const matPerUnit = m => num(m.perUnit) > 0 ? num(m.perUnit) : 0;
+const matUnitsDone = m => matPerUnit(m) ? r2(num(m.qtyDelivered) / matPerUnit(m)) : null;
+const matUnitsReq = m => matPerUnit(m) ? r2(num(m.qtyReq) / matPerUnit(m)) : null;
 function newActivity(o){ return Object.assign({ id:uid(), name:'', start:'', end:'', pct:0, weight:1 }, o || {}); }
 function newMilestone(o){ return Object.assign({ id:uid(), name:'', date:'', done:false }, o || {}); }
 function newTerm(o){ return Object.assign({ id:uid(), label:'', pct:0, amount:null, invoiced:0, invoiceNo:'', invoiceDate:'', received:0, receivedDate:'', note:'' }, o || {}); }
@@ -392,7 +396,7 @@ function blankProject(name){
   return {
     id:uuid(), created:Date.now(), updated:Date.now(),
     name:name || '', client:'', location:'', ref:'', status:'confirmed',
-    contractValue:0, vatIncluded:true, roofArea:0,
+    contractValue:0, vatIncluded:true, roofArea:0, units:0,
     startDate:todayISO(), endDate:addDays(todayISO(), 45),
     notes:'',
     materials:[], activities:[], milestones:[], terms:[], subs:[]
@@ -454,8 +458,15 @@ function projectFromQuoteStudio(qp){
     if(!desc && !String(l.code || '').trim()) return;
     if(/^transport charges?$/i.test(desc)) return;      /* a service, not a material */
     const key = (String(l.code || '').trim().toLowerCase() || desc.toLowerCase());
-    if(seen[key]){ seen[key].qtyReq = r2(seen[key].qtyReq + qty); return; }   /* same code in two quotes */
-    const m = newMaterial({ code:String(l.code || '').trim(), desc:desc || String(l.code || ''), qtyReq:qty, rate:r2(qsLineNet(l)), unit:'pcs' });
+    const u = qsUnits(q);
+    const per = u > 1 ? r2(num(l.qty)) : 0;
+    if(seen[key]){
+      seen[key].qtyReq = r2(seen[key].qtyReq + qty);
+      if(per) seen[key].perUnit = r2(num(seen[key].perUnit) + per);
+      return;                                                 /* same code in two quotes */
+    }
+    if(u > 1) p.units = Math.max(num(p.units) || 0, u);
+    const m = newMaterial({ code:String(l.code || '').trim(), desc:desc || String(l.code || ''), qtyReq:qty, perUnit:per, rate:r2(qsLineNet(l)), unit:'pcs' });
     seen[key] = m; p.materials.push(m);
   }));
   seedProgramme(p); seedTerms(p);
@@ -565,6 +576,35 @@ function matState(m){
 }
 const matStateLabel = s => ({ 'to-order':'To order', 'part-ordered':'Part ordered', 'ordered':'Ordered', 'part':'Part delivered', 'delivered':'Delivered' })[s] || s;
 const matOutstanding = m => Math.max(0, r2(num(m.qtyReq) - num(m.qtyDelivered)));
+const projUnits = p => Math.max(0, Math.round(num(p && p.units) || 0));
+/* Mark the whole schedule received. */
+function deliverEverything(p){
+  let n = 0;
+  p.materials.forEach(m => {
+    const req = num(m.qtyReq);
+    if(req <= 0) return;
+    if(num(m.qtyDelivered) >= req && num(m.qtyOrdered) >= req) return;
+    m.qtyOrdered = Math.max(num(m.qtyOrdered), req);
+    m.qtyDelivered = req; n++;
+  });
+  return n;
+}
+/* Set deliveries to match N completed units. Lines that are not scaled by
+   units are left alone, so a one-off clubhouse line is not touched. */
+function deliverUnits(p, units){
+  const u = Math.max(0, num(units));
+  let n = 0, skipped = 0;
+  p.materials.forEach(m => {
+    const per = matPerUnit(m);
+    if(!per){ if(num(m.qtyReq) > 0) skipped++; return; }
+    const want = Math.min(num(m.qtyReq), r2(per * u));
+    if(want === num(m.qtyDelivered)) return;
+    m.qtyDelivered = want;
+    m.qtyOrdered = Math.max(num(m.qtyOrdered), want);
+    n++;
+  });
+  return { n, skipped };
+}
 const matValue = m => r2(num(m.qtyReq) * num(m.rate));          /* value at the price quoted to the client */
 const matCost  = m => r2(num(m.qtyReq) * num(m.cost));          /* what buying it actually costs us */
 function matUrgency(m){
@@ -742,6 +782,13 @@ function calcVal(el){
   const d = el.dataset;
   switch(d.calc){
     case 'matOut':   { const m = project.materials.find(x => x.id === d.i); return m ? (matOutstanding(m) ? fmt(matOutstanding(m), 2) : '—') : ''; }
+    case 'matUnits': {
+      const m = project.materials.find(x => x.id === d.i);
+      if(!m) return '';
+      const done = matUnitsDone(m);
+      if(done === null) return 'one-off';
+      return fmt(done, done % 1 ? 2 : 0) + ' of ' + fmt(matUnitsReq(m), matUnitsReq(m) % 1 ? 2 : 0);
+    }
     case 'matVal':   { const m = project.materials.find(x => x.id === d.i); return m ? fmt(matValue(m)) : ''; }
     case 'matState': { const m = project.materials.find(x => x.id === d.i); return m ? matStateLabel(matState(m)) : ''; }
     case 'matTotal': return fmt(procurementTotals().value);
@@ -849,10 +896,22 @@ function tabProcure(){
       SEL({ onchange:'matstatus' }, [['','All statuses']].concat(MAT_STATES), ui.matStatus) +
       '<button class="btn primary" data-action="mat-add">+ Add material</button>' +
       '<button class="btn" data-action="mat-import">Import from a quote…</button>' +
-      '<button class="btn" data-action="mat-csv">Export CSV</button></div>' +
-      '<div class="tablewrap"><table class="t" style="min-width:1340px"><colgroup><col style="width:26px"><col style="width:110px"><col><col style="width:58px"><col style="width:80px"><col style="width:80px"><col style="width:80px"><col style="width:70px"><col style="width:94px"><col style="width:98px"><col style="width:140px"><col style="width:132px"><col style="width:118px"></colgroup>' +
-      '<thead><tr><th></th><th>Code</th><th>Description</th><th>Unit</th><th class="r">Required</th><th class="r">Ordered</th><th class="r">Delivered</th><th class="r">Short</th><th class="r">Buy price</th><th class="r">Cost</th><th>Supplier</th><th>Needed on site</th><th></th></tr></thead><tbody>' + rows + '</tbody>' +
-      '<tfoot><tr><td colspan="8" class="r">Quoted value <span data-calc="matTotal"></span></td><td colspan="2" class="r">Cost <span data-calc="matCostTot"></span></td><td colspan="3"></td></tr></tfoot></table></div></section></div>';
+      '<button class="btn" data-action="mat-csv">Export CSV</button>' +
+      '<span style="flex:1"></span>' +
+      (projUnits(project) > 1
+        ? '<label class="fld" style="padding-top:0"><span>Units delivered of ' + projUnits(project) + '</span>' +
+          '<input type="text" inputmode="decimal" class="r" id="unitsDel" placeholder="0" value="' + esc(ui.unitsDel == null ? '' : ui.unitsDel) + '"></label>' +
+          '<button class="btn" data-action="deliver-units">Fill from units</button>'
+        : '') +
+      '<button class="btn" data-action="deliver-all">Everything delivered</button></div>' +
+      (projUnits(project) > 1 ? '<p class="hint">This job has <b>' + projUnits(project) + ' typical units</b>. Enter how many are fully delivered and every unit-based line is filled in; one-off lines are left for you to set.</p>' : '') +
+      '<div class="tablewrap"><table class="t" style="min-width:' + (projUnits(project) > 1 ? 1430 : 1340) + 'px"><colgroup><col style="width:26px"><col style="width:110px"><col><col style="width:58px"><col style="width:80px"><col style="width:80px"><col style="width:80px">' +
+        (projUnits(project) > 1 ? '<col style="width:90px">' : '') +
+        '<col style="width:70px"><col style="width:94px"><col style="width:98px"><col style="width:140px"><col style="width:132px"><col style="width:118px"></colgroup>' +
+      '<thead><tr><th></th><th>Code</th><th>Description</th><th>Unit</th><th class="r">Required</th><th class="r">Ordered</th><th class="r">Delivered</th>' +
+        (projUnits(project) > 1 ? '<th class="r">Units del.</th>' : '') +
+        '<th class="r">Short</th><th class="r">Buy price</th><th class="r">Cost</th><th>Supplier</th><th>Needed on site</th><th></th></tr></thead><tbody>' + rows + '</tbody>' +
+      '<tfoot><tr><td colspan="' + (projUnits(project) > 1 ? 9 : 8) + '" class="r">Quoted value <span data-calc="matTotal"></span></td><td colspan="2" class="r">Cost <span data-calc="matCostTot"></span></td><td colspan="3"></td></tr></tfoot></table></div></section></div>';
 }
 const pillFor = st => ({ 'to-order':'grey', 'part-ordered':'amber', 'ordered':'blue', 'part':'amber', 'delivered':'green' })[st] || 'grey';
 function matRow(m, i){
@@ -865,6 +924,9 @@ function matRow(m, i){
     '<td>' + inp(Object.assign({ f:'qtyReq', num:1 }, M), numDisp(m.qtyReq), 'r', '0') + '</td>' +
     '<td>' + inp(Object.assign({ f:'qtyOrdered', num:1 }, M), numDisp(m.qtyOrdered), 'r', '0') + '</td>' +
     '<td>' + inp(Object.assign({ f:'qtyDelivered', num:1 }, M), numDisp(m.qtyDelivered), 'r', '0') + '</td>' +
+    (projUnits(project) > 1
+      ? '<td class="r"><span class="calc soft" data-calc="matUnits" data-i="' + m.id + '"></span></td>'
+      : '') +
     '<td class="r"><span class="calc soft" data-calc="matOut" data-i="' + m.id + '"></span></td>' +
     '<td>' + inp(Object.assign({ f:'cost', num:1 }, M), numDisp(m.cost), 'r', '0.00') + '</td>' +
     '<td class="r"><span class="calc soft" data-calc="matCost" data-i="' + m.id + '"></span></td>' +
@@ -1706,6 +1768,29 @@ function act(a, el, ev){
     case 'buy-open': { const k = d.k; ui.buyOpen[k] = !ui.buyOpen[k]; render(); break; }
     case 'buy-all': ui.buyAll = !ui.buyAll; render(); break;
     case 'buy-csv': downloadBlob(new Blob([buyingCsv()], { type:'text/csv' }), 'buying_list_' + todayISO() + '.csv'); break;
+
+    /* bulk deliveries */
+    case 'deliver-all': {
+      const out = project.materials.filter(m => num(m.qtyReq) > 0 && matOutstanding(m) > 0).length;
+      if(!out){ toast('Everything is already marked delivered'); break; }
+      if(!confirm('Mark all ' + out + ' outstanding material lines as fully ordered and delivered?')) break;
+      const n = deliverEverything(project);
+      touch(true); render(); toast(n + ' lines marked delivered');
+      break;
+    }
+    case 'deliver-units': {
+      const box = $('#unitsDel');
+      const u = num(box ? box.value : 0);
+      const total = projUnits(project);
+      if(!(u >= 0)){ toast('Enter how many units are delivered'); break; }
+      if(u > total && !confirm('This job has ' + total + ' units. Fill deliveries for ' + u + ' anyway?')) break;
+      const r = deliverUnits(project, u);
+      ui.unitsDel = box ? box.value : '';
+      touch(true); render();
+      toast(r.n + ' lines set to ' + u + ' unit' + (u === 1 ? '' : 's') +
+        (r.skipped ? ', ' + r.skipped + ' one-off line' + (r.skipped === 1 ? '' : 's') + ' left alone' : ''));
+      break;
+    }
 
     /* materials */
     case 'mat-add': { const m = newMaterial(); project.materials.push(m); touch(true); ui.focus = { sel:'[data-i="' + m.id + '"][data-f="code"]' }; render(); break; }
