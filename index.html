@@ -235,6 +235,8 @@ body.report #reportBar{display:flex}
 .rpage .kv div{border:.2mm solid #999;border-radius:1.5mm;padding:2mm}
 .rpage .kv .k{font-size:7.5pt;color:#555;font-weight:700}
 .rpage .kv .v{font-size:12pt;font-weight:700}
+.rpage table.pipe tr.sub td{color:#444;font-size:8.4pt;border-bottom:.1mm solid #ddd}
+.rpage table.pipe tr.grp td{border-top:.3mm solid #888}
 .rpage .note{font-size:8.5pt;color:#444;margin-top:2mm}
 @media print{
   html,body{background:#fff!important}
@@ -1346,16 +1348,83 @@ function reportHTML(){
 
   return p1 + p2 + p3;
 }
-function renderReport(){ $('#reportRoot').innerHTML = reportHTML(); }
-function enterReport(){
+function renderReport(){ $('#reportRoot').innerHTML = ui.reportKind === 'pipeline' ? pipelineReportHTML() : reportHTML(); }
+function enterReport(kind){
   if(saveTimer) saveNow();
+  ui.reportKind = kind === 'pipeline' ? 'pipeline' : 'project';
   ui.report = true; document.body.classList.add('report');
-  $('#reportBar').innerHTML = '<button class="tb-btn" data-action="report-exit">← Back to the tracker</button><span style="font-weight:700">Project report</span>' +
+  $('#reportBar').innerHTML = '<button class="tb-btn" data-action="report-exit">← Back to the tracker</button><span style="font-weight:700">' +
+    (ui.reportKind === 'pipeline' ? 'Material pipeline — all projects' : 'Project report') + '</span>' +
     '<span class="grow"></span><span style="font-size:12.5px;opacity:.85">Print on A4 · margins: None</span>' +
     '<button class="tb-btn primary" data-action="print">Print / Save as PDF</button>';
   renderReport(); window.scrollTo(0, 0);
 }
 function exitReport(){ ui.report = false; document.body.classList.remove('report'); $('#reportRoot').innerHTML = ''; render(); }
+
+/* =====================================================================
+   Material pipeline across every project — printable
+   ===================================================================== */
+function pipelineReportHTML(){
+  const B = buyingList();
+  const rows = B.rows;
+  const total = r2(rows.reduce((a, r) => a + r.cost, 0));
+  const overdue = rows.filter(r => r.needBy && r.needBy < todayISO());
+  const soon = rows.filter(r => r.needBy && r.needBy >= todayISO() && daysBetween(todayISO(), r.needBy) <= 7);
+  const ps = allProjects().filter(p => ui.buyAll || LIVE[p.status]);
+  const head = (sub) => '<div class="rhead"><div><h1>Material pipeline</h1><div class="sub">' + sub + '</div></div>' +
+    '<div class="meta">SPACE AND STYLE LTD<br>Prepared ' + fmtDMY(todayISO()) + '</div></div>';
+
+  /* ---- what each project still needs ---- */
+  const byProject = ps.map(p => {
+    const mats = p.materials.filter(m => matOutstanding(m) > 0);
+    const cost = r2(mats.reduce((a, m) => a + r2(matOutstanding(m) * num(m.cost)), 0));
+    const need = mats.map(m => m.needBy).filter(Boolean).sort()[0] || '';
+    return { p, lines:mats.length, cost, need, late:mats.filter(m => m.needBy && m.needBy < todayISO()).length };
+  }).filter(x => x.lines).sort((a, b) => b.cost - a.cost);
+
+  const p1 = '<section class="rpage">' + head('Everything still to be bought, pooled across ' + B.projects + ' project' + (B.projects === 1 ? '' : 's')) +
+    '<div class="kv">' +
+      '<div><div class="k">PROJECTS</div><div class="v">' + B.projects + '</div><div class="k">' + (ui.buyAll ? 'all projects' : 'confirmed, on site and snagging') + '</div></div>' +
+      '<div><div class="k">CODES TO BUY</div><div class="v">' + rows.length + '</div><div class="k">distinct items short</div></div>' +
+      '<div><div class="k">VALUE TO BUY</div><div class="v">' + fmt0(total) + '</div><div class="k">' + CUR() + ', at buy prices</div></div>' +
+      '<div><div class="k">OVERDUE</div><div class="v">' + overdue.length + '</div><div class="k">' + soon.length + ' more due within 7 days</div></div>' +
+    '</div>' +
+    '<h2>By project</h2>' +
+    '<table><thead><tr><th>Project</th><th>Client</th><th class="r">Lines short</th><th class="r">Value to buy</th><th class="r">First needed</th></tr></thead><tbody>' +
+    (byProject.length ? byProject.map(x => '<tr><td>' + esc(projectLabel(x.p)) + '</td><td>' + esc(x.p.client || '—') + '</td>' +
+      '<td class="r">' + x.lines + (x.late ? ' (' + x.late + ' late)' : '') + '</td><td class="r">' + fmt(x.cost) + '</td>' +
+      '<td class="r">' + (x.need ? fmtDMY(x.need) : '—') + '</td></tr>').join('')
+      : '<tr><td colspan="5">Nothing outstanding.</td></tr>') +
+    '</tbody><tfoot><tr><td colspan="3">Total</td><td class="r">' + fmt(total) + '</td><td></td></tr></tfoot></table>' +
+    '<p class="note">Quantities are what is still short — required less delivered. Values use the buy price entered against each line, so lines with no buy price contribute nothing.</p>' +
+    '</section>';
+
+  /* ---- the pooled buying schedule, showing which project wants what ---- */
+  const perPage = 16;
+  const chunks = [];
+  for(let i = 0; i < rows.length; i += perPage) chunks.push(rows.slice(i, i + perPage));
+  const body = chunks.map((chunk, ci) => '<section class="rpage">' +
+    head('Buying schedule — page ' + (ci + 1) + ' of ' + chunks.length + ', earliest need first') +
+    '<table class="pipe"><thead><tr><th>Code</th><th>Description</th><th class="r">To buy</th><th>Unit</th><th>Supplier</th><th class="r">Needed by</th><th class="r">Cost</th></tr></thead><tbody>' +
+    chunk.map(r => {
+      const late = r.needBy && r.needBy < todayISO();
+      const main = '<tr class="grp"><td><b>' + esc(r.code || '—') + '</b></td><td>' + esc(r.desc) + '</td>' +
+        '<td class="r"><b>' + fmt(r.short, 2) + '</b></td><td>' + esc(r.unit) + '</td>' +
+        '<td>' + esc(Object.keys(r.suppliers).join(', ') || '—') + '</td>' +
+        '<td class="r">' + (r.needBy ? fmtDMY(r.needBy) + (late ? ' (late)' : '') : '—') + '</td>' +
+        '<td class="r">' + (r.uncosted ? 'not priced' : fmt(r.cost)) + '</td></tr>';
+      const subs = r.lines.slice().sort((a, b) => String(a.needBy || '9999').localeCompare(String(b.needBy || '9999')))
+        .map(l => '<tr class="sub"><td></td><td colspan="2">' + esc(l.project) + '</td>' +
+          '<td class="r" colspan="2">' + fmt(l.short, 2) + '</td>' +
+          '<td class="r">' + (l.needBy ? fmtDMY(l.needBy) : '—') + '</td><td class="r">' + esc(matStateLabel(l.state)) + '</td></tr>').join('');
+      return main + subs;
+    }).join('') +
+    '</tbody></table>' +
+    (ci === chunks.length - 1 ? '<p class="note">Each code shows the pooled quantity first, then the projects making it up. Order the pooled figure; split the delivery by the project lines.</p>' : '') +
+    '</section>').join('');
+
+  return p1 + (body || '');
+}
 
 /* =====================================================================
    Supabase sync (shared projects) + the buying list across all projects
@@ -1561,6 +1630,7 @@ function tabBuying(){
       SEL({ onchange:'buysupplier' }, [['','All suppliers']].concat(sup.map(s => [s, s])), ui.buySupplier) +
       '<label class="fld chk" style="padding-top:0"><input type="checkbox" data-action="buy-all"' + (ui.buyAll ? ' checked' : '') + '><span>Include finished and on-hold projects</span></label>' +
       '<button class="btn" data-action="buy-csv">Export CSV</button>' +
+      '<button class="btn solid" data-action="pipeline-report">Print pipeline report</button>' +
       (cloudOn() ? '<button class="btn solid" data-action="cloud-pull">Pull the team’s projects</button>' : '') + '</div>' +
       '<div class="tablewrap"><table class="t" style="min-width:980px"><colgroup><col style="width:30px"><col style="width:120px"><col><col style="width:60px"><col style="width:110px"><col style="width:120px"><col style="width:170px"><col style="width:130px"></colgroup>' +
       '<thead><tr><th></th><th>Code</th><th>Description</th><th>Unit</th><th class="r">To buy</th><th class="r">Cost</th><th>Supplier</th><th>Needed by</th></tr></thead><tbody>' + rows + '</tbody>' +
@@ -1768,6 +1838,7 @@ function act(a, el, ev){
     case 'buy-open': { const k = d.k; ui.buyOpen[k] = !ui.buyOpen[k]; render(); break; }
     case 'buy-all': ui.buyAll = !ui.buyAll; render(); break;
     case 'buy-csv': downloadBlob(new Blob([buyingCsv()], { type:'text/csv' }), 'buying_list_' + todayISO() + '.csv'); break;
+    case 'pipeline-report': enterReport('pipeline'); break;
 
     /* bulk deliveries */
     case 'deliver-all': {
